@@ -1,10 +1,12 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <cmath>
 #include <exception>
 #include <iostream>
 #include <string>
 #include "Shader.h"
 #include "Camera.h"
+#include "Scene.h"
 
 static void onResize(GLFWwindow*, int width, int height) {
     glViewport(0, 0, width, height);
@@ -40,14 +42,17 @@ int main() {
 
     try {
         Shader shader("shaders/basic.vert", "shaders/basic.frag");
+        Scene scene;
         Camera camera;
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
 
         double lastTitleTime = glfwGetTime();
         int frames = 0;
 
         while (!glfwWindowShouldClose(window)) {
             double now = glfwGetTime();
+            float time = (float)now;
             ++frames;
             if (now - lastTitleTime >= 0.5) {
                 int fps = (int)(frames / (now - lastTitleTime));
@@ -66,12 +71,17 @@ int main() {
                 continue;
             }
 
+            camera.position = glm::vec3(std::sin(time * 0.3f) * 6.f, 6.f, 28.f);
+
             glClearColor(0.02f, 0.03f, 0.10f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             shader.use();
             shader.setMat4("uView", camera.view());
             shader.setMat4("uProj", camera.projection((float)width / height));
+
+            scene.update(time);
+            scene.draw(shader);
 
             glfwSwapBuffers(window);
             glfwPollEvents();
