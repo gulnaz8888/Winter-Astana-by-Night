@@ -8,6 +8,7 @@
 #include "Camera.h"
 #include "Scene.h"
 #include "Sky.h"
+#include "Lights.h"
 
 static void onResize(GLFWwindow*, int width, int height) {
     glViewport(0, 0, width, height);
@@ -88,6 +89,9 @@ int main() {
             shader.setVec3("uCamPos", camera.position);
             shader.setVec3("uFogColor", fogColor);
             shader.setFloat("uFogDensity", 0.006f);
+
+            Lights::apply(shader, camera.position, time);
+
 
             scene.update(time);
             scene.draw(shader);
