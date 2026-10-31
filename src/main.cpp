@@ -9,6 +9,7 @@
 #include "Scene.h"
 #include "Sky.h"
 #include "Lights.h"
+#include "Snow.h"
 
 static void onResize(GLFWwindow*, int width, int height) {
     glViewport(0, 0, width, height);
@@ -45,11 +46,15 @@ int main() {
     try {
         Shader shader("shaders/basic.vert", "shaders/basic.frag");
         Shader skyShader("shaders/sky.vert", "shaders/sky.frag");
+        Shader snowShader("shaders/snow.vert", "shaders/snow.frag");
         Sky sky;
         Scene scene;
         Camera camera;
+        Snow snow(4000);
         const glm::vec3 fogColor(0.17f, 0.29f, 0.48f);
         glEnable(GL_CULL_FACE);
+
+        float lastFrame = static_cast<float>(glfwGetTime());
 
         double lastTitleTime = glfwGetTime();
         int frames = 0;
@@ -57,6 +62,8 @@ int main() {
         while (!glfwWindowShouldClose(window)) {
             double now = glfwGetTime();
             float time = (float)now;
+            float deltaTime = time - lastFrame;
+            lastFrame = time;
             ++frames;
             if (now - lastTitleTime >= 0.5) {
                 int fps = (int)(frames / (now - lastTitleTime));
@@ -95,6 +102,12 @@ int main() {
 
             scene.update(time);
             scene.draw(shader);
+            snow.update(deltaTime);
+            snow.draw(
+                snowShader,
+                camera.view(),
+                camera.projection((float)width / height)
+            );
 
             glfwSwapBuffers(window);
             glfwPollEvents();
