@@ -1,15 +1,73 @@
+
 #version 330 core
+
 in vec3 vNormal;
 in vec3 vWorldPos;
+
 out vec4 FragColor;
+
+struct PointLight {
+    vec3 position;
+    vec3 color;
+    float intensity;
+};
+
+uniform PointLight uLights[2];
 
 uniform vec3 uColor;
 uniform vec3 uEmissive;
+uniform vec3 uViewPos;
+uniform float uShininess;
 
-void main() {
+void main()
+{
     vec3 N = normalize(vNormal);
-    vec3 L = normalize(vec3(-0.4, 0.8, 0.5));
-    float diff = max(dot(N, L), 0.0) * 0.6;
-    vec3 light = vec3(0.55, 0.62, 0.9) * (0.22 + diff);
-    FragColor = vec4(uColor * light + uEmissive, 1.0);
+    vec3 V = normalize(uViewPos - vWorldPos);
+
+    // Ambient lighting
+    vec3 ambient = 0.15 * uColor;
+
+    vec3 result = ambient;
+
+    // Two point lights
+    for (int i = 0; i < 2; i++)
+    {
+        vec3 lightVector =
+            uLights[i].position - vWorldPos;
+
+        float distance = length(lightVector);
+        vec3 L = normalize(lightVector);
+
+        // Diffuse lighting
+        float diff = max(dot(N, L), 0.0);
+        vec3 diffuse = diff * uColor;
+
+        // Blinn-Phong specular lighting
+        vec3 H = normalize(L + V);
+
+        float spec = pow(
+            max(dot(N, H), 0.0),
+            max(uShininess, 1.0)
+        );
+
+        vec3 specular = vec3(0.35) * spec;
+
+        // Distance attenuation
+        float attenuation = 1.0 /
+            (1.0 + 0.09 * distance
+                 + 0.032 * distance * distance);
+
+        vec3 lightContribution =
+            (diffuse + specular)
+            * uLights[i].color
+            * uLights[i].intensity
+            * attenuation;
+
+        result += lightContribution;
+    }
+
+    // Emissive material
+    result += uEmissive;
+
+    FragColor = vec4(result, 1.0);
 }
