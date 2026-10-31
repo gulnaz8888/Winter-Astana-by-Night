@@ -18,15 +18,18 @@ private:
     Mesh cube;
     Mesh cylinder;
     Mesh taper;
+    Mesh cone;
     Mesh sphere;
     Node root;
-    Node* beaconPivot = nullptr;
+    Node* ballPivot = nullptr;
 
     Node* add(Node& parent, const Mesh& mesh, glm::vec3 position, glm::vec3 scale,
               glm::vec3 color, glm::vec3 emissive = glm::vec3(0.f));
     void buildGround();
-    void buildBuildings();
+    void buildAvenue();
     void buildLamps();
+    void buildSkyline();
+    void buildMosque();
+    void buildKhanShatyr();
     void buildBaiterek();
-    void buildMoon();
 };

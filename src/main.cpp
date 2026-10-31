@@ -7,6 +7,7 @@
 #include "Shader.h"
 #include "Camera.h"
 #include "Scene.h"
+#include "Sky.h"
 
 static void onResize(GLFWwindow*, int width, int height) {
     glViewport(0, 0, width, height);
@@ -42,9 +43,11 @@ int main() {
 
     try {
         Shader shader("shaders/basic.vert", "shaders/basic.frag");
+        Shader skyShader("shaders/sky.vert", "shaders/sky.frag");
+        Sky sky;
         Scene scene;
         Camera camera;
-        glEnable(GL_DEPTH_TEST);
+        const glm::vec3 fogColor(0.17f, 0.29f, 0.48f);
         glEnable(GL_CULL_FACE);
 
         double lastTitleTime = glfwGetTime();
@@ -71,14 +74,20 @@ int main() {
                 continue;
             }
 
-            camera.position = glm::vec3(std::sin(time * 0.3f) * 6.f, 6.f, 28.f);
+            camera.position.x = std::sin(time * 0.25f) * 5.f;
 
-            glClearColor(0.02f, 0.03f, 0.10f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            glDisable(GL_DEPTH_TEST);
+            sky.draw(skyShader);
+            glEnable(GL_DEPTH_TEST);
 
             shader.use();
             shader.setMat4("uView", camera.view());
             shader.setMat4("uProj", camera.projection((float)width / height));
+            shader.setVec3("uCamPos", camera.position);
+            shader.setVec3("uFogColor", fogColor);
+            shader.setFloat("uFogDensity", 0.006f);
 
             scene.update(time);
             scene.draw(shader);
