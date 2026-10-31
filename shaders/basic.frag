@@ -19,17 +19,20 @@ uniform vec3 uEmissive;
 uniform vec3 uViewPos;
 uniform float uShininess;
 
+// Fog uniforms from Gulnaz's scene
+uniform vec3 uCamPos;
+uniform vec3 uFogColor;
+uniform float uFogDensity;
+
 void main()
 {
     vec3 N = normalize(vNormal);
     vec3 V = normalize(uViewPos - vWorldPos);
 
     // Ambient lighting
-    vec3 ambient = 0.15 * uColor;
+    vec3 result = 0.15 * uColor;
 
-    vec3 result = ambient;
-
-    // Two point lights
+    // Two Blinn-Phong point lights
     for (int i = 0; i < 2; i++)
     {
         vec3 lightVector =
@@ -38,11 +41,11 @@ void main()
         float distance = length(lightVector);
         vec3 L = normalize(lightVector);
 
-        // Diffuse lighting
+        // Diffuse
         float diff = max(dot(N, L), 0.0);
         vec3 diffuse = diff * uColor;
 
-        // Blinn-Phong specular lighting
+        // Blinn-Phong specular
         vec3 H = normalize(L + V);
 
         float spec = pow(
@@ -52,22 +55,30 @@ void main()
 
         vec3 specular = vec3(0.35) * spec;
 
-        // Distance attenuation
-        float attenuation = 1.0 /
-            (1.0 + 0.09 * distance
-                 + 0.032 * distance * distance);
+        // Light attenuation
+        float attenuation =
+            1.0 / (1.0 + 0.09 * distance
+                         + 0.032 * distance * distance);
 
-        vec3 lightContribution =
-            (diffuse + specular)
+        result += (diffuse + specular)
             * uLights[i].color
             * uLights[i].intensity
             * attenuation;
-
-        result += lightContribution;
     }
 
-    // Emissive material
-    result += uEmissive;
+    // Fog from Gulnaz's implementation
+    float dist = length(vWorldPos - uCamPos);
 
-    FragColor = vec4(result, 1.0);
+    float fog = clamp(
+        1.0 - exp(-dist * uFogDensity),
+        0.0,
+        1.0
+    );
+
+    vec3 color = mix(result, uFogColor, fog);
+
+    // Emissive windows and lamps
+    color += uEmissive * (1.0 - 0.5 * fog);
+
+    FragColor = vec4(color, 1.0);
 }
