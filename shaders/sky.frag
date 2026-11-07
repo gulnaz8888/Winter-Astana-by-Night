@@ -1,5 +1,8 @@
 #version 330 core
 in vec2 vUV;
+uniform vec3 uHorizon;
+uniform vec3 uTop;
+uniform float uStars;
 out vec4 FragColor;
 
 float hash(vec2 p) {
@@ -7,8 +10,8 @@ float hash(vec2 p) {
 }
 
 void main() {
-    vec3 horizonColor = vec3(0.17, 0.29, 0.48);
-    vec3 topColor = vec3(0.012, 0.02, 0.05);
+    vec3 horizonColor = uHorizon;
+    vec3 topColor = uTop;
     float t = clamp((vUV.y - 0.38) / 0.62, 0.0, 1.0);
     vec3 color = mix(horizonColor, topColor, pow(t, 0.7));
 
@@ -21,5 +24,5 @@ void main() {
     float star = step(0.82, hash(cell)) * (1.0 - smoothstep(size * 0.4, size, d));
     star *= smoothstep(0.4, 0.75, vUV.y);
 
-    FragColor = vec4(color + vec3(star), 1.0);
+    FragColor = vec4(color + vec3(star * uStars), 1.0);
 }
