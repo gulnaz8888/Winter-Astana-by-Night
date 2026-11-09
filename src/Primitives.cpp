@@ -207,4 +207,26 @@ Mesh sphere(int stacks, int slices) {
     return Mesh(vertices, indices);
 }
 
+Mesh torus(int segments, int sides, float tubeRadius) {
+    std::vector<float> v;
+    std::vector<unsigned> idx;
+    for (int i = 0; i <= segments; ++i) {
+        float a = 2.f * PI * i / segments;
+        for (int j = 0; j <= sides; ++j) {
+            float b = 2.f * PI * j / sides;
+            float ring = 0.5f + tubeRadius * std::cos(b);
+            pushVertex(v, {ring * std::cos(a), tubeRadius * std::sin(b), ring * std::sin(a)},
+                       {std::cos(b) * std::cos(a), std::sin(b), std::cos(b) * std::sin(a)});
+        }
+    }
+    for (int i = 0; i < segments; ++i) {
+        for (int j = 0; j < sides; ++j) {
+            unsigned a = i * (sides + 1) + j;
+            unsigned b = a + sides + 1;
+            idx.insert(idx.end(), {a, a + 1, b, a + 1, b + 1, b});
+        }
+    }
+    return Mesh(v, idx);
+}
+
 }

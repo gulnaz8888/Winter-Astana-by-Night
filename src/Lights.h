@@ -6,10 +6,11 @@
 
 class Lights {
 public:
-    // Send lighting parameters to the shader
     static void apply(
         const Shader& shader,
         const glm::vec3& cameraPosition,
-        float time
+        float time,
+        int sceneIndex,
+        bool enabled
     );
 };

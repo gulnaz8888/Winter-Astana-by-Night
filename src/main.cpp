@@ -7,6 +7,7 @@
 #include "Shader.h"
 #include "Camera.h"
 #include "Scene.h"
+#include "ExpoScene.h"
 #include "Sky.h"
 #include "Lights.h"
 #include "Snow.h"
@@ -49,9 +50,19 @@ int main() {
         Shader snowShader("shaders/snow.vert", "shaders/snow.frag");
         Sky sky;
         Scene scene;
+        ExpoScene expoScene;
         Camera camera;
         Snow snow(4000);
-        const glm::vec3 fogColor(0.17f, 0.29f, 0.48f);
+        int activeScene = 0;
+        bool lightingEnabled = true;
+        bool lWasPressed = false;
+        const glm::vec3 fogColors[2] = {glm::vec3(0.17f, 0.29f, 0.48f), glm::vec3(0.30f, 0.22f, 0.17f)};
+        const float fogDensities[2] = {0.006f, 0.0025f};
+        const glm::vec3 skyHorizon[2] = {glm::vec3(0.17f, 0.29f, 0.48f), glm::vec3(0.33f, 0.24f, 0.18f)};
+        const glm::vec3 skyTop[2] = {glm::vec3(0.012f, 0.02f, 0.05f), glm::vec3(0.20f, 0.14f, 0.11f)};
+        const float skyStars[2] = {1.f, 0.f};
+        const glm::vec3 camPositions[2] = {glm::vec3(0.f, 5.f, 40.f), glm::vec3(0.f, 5.f, 37.f)};
+        const glm::vec3 camTargets[2] = {glm::vec3(0.f, 20.f, -55.f), glm::vec3(0.f, 28.f, -42.f)};
         glEnable(GL_CULL_FACE);
 
         float lastFrame = static_cast<float>(glfwGetTime());
@@ -75,6 +86,19 @@ int main() {
                 glfwSetWindowShouldClose(window, GLFW_TRUE);
             }
 
+            bool lPressed =
+                glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS;
+
+            if (lPressed && !lWasPressed) {
+                lightingEnabled = !lightingEnabled;
+
+                std::cout << "Point lighting: "
+                    << (lightingEnabled ? "ON" : "OFF")
+                    << std::endl;
+            }
+
+            lWasPressed = lPressed;
+
             int width, height;
             glfwGetFramebufferSize(window, &width, &height);
             if (height == 0) {
@@ -82,11 +106,28 @@ int main() {
                 continue;
             }
 
+            int requested = activeScene;
+            if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
+                requested = 0;
+            }
+            if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
+                requested = 1;
+            }
+            if (requested != activeScene) {
+                activeScene = requested;
+                camera.position = camPositions[activeScene];
+                camera.target = camTargets[activeScene];
+            }
+
             camera.position.x = std::sin(time * 0.25f) * 5.f;
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             glDisable(GL_DEPTH_TEST);
+            skyShader.use();
+            skyShader.setVec3("uHorizon", skyHorizon[activeScene]);
+            skyShader.setVec3("uTop", skyTop[activeScene]);
+            skyShader.setFloat("uStars", skyStars[activeScene]);
             sky.draw(skyShader);
             glEnable(GL_DEPTH_TEST);
 
@@ -94,14 +135,25 @@ int main() {
             shader.setMat4("uView", camera.view());
             shader.setMat4("uProj", camera.projection((float)width / height));
             shader.setVec3("uCamPos", camera.position);
-            shader.setVec3("uFogColor", fogColor);
-            shader.setFloat("uFogDensity", 0.006f);
+            shader.setVec3("uFogColor", fogColors[activeScene]);
+            shader.setFloat("uFogDensity", fogDensities[activeScene]);
 
-            Lights::apply(shader, camera.position, time);
+            Lights::apply(
+                shader,
+                camera.position,
+                time,
+                activeScene,
+                lightingEnabled
+            );
 
 
-            scene.update(time);
-            scene.draw(shader);
+            if (activeScene == 0) {
+                scene.update(time);
+                scene.draw(shader);
+            } else {
+                expoScene.update(time);
+                expoScene.draw(shader);
+            }
             snow.update(deltaTime);
             snow.draw(
                 snowShader,
