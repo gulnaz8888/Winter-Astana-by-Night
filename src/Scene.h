@@ -1,12 +1,18 @@
+
 #pragma once
+
+#include <memory>
 #include <glm/glm.hpp>
+
 #include "Mesh.h"
 #include "Node.h"
 #include "Shader.h"
+#include "Texture.h"
 
 class Scene {
 public:
     Scene();
+
     Scene(const Scene&) = delete;
     Scene& operator=(const Scene&) = delete;
 
@@ -20,11 +26,24 @@ private:
     Mesh taper;
     Mesh cone;
     Mesh sphere;
+
+    std::unique_ptr<Texture> brickTexture;
+    std::unique_ptr<Texture> asphaltTexture;
+    std::unique_ptr<Texture> snowTexture;
+    std::unique_ptr<Texture> glassTexture;
+
     Node root;
     Node* ballPivot = nullptr;
 
-    Node* add(Node& parent, const Mesh& mesh, glm::vec3 position, glm::vec3 scale,
-              glm::vec3 color, glm::vec3 emissive = glm::vec3(0.f));
+    Node* add(
+        Node& parent,
+        const Mesh& mesh,
+        glm::vec3 position,
+        glm::vec3 scale,
+        glm::vec3 color,
+        glm::vec3 emissive = glm::vec3(0.f)
+    );
+
     void buildGround();
     void buildAvenue();
     void buildLamps();
