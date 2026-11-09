@@ -57,8 +57,8 @@ void main()
 
         // Light attenuation
         float attenuation =
-            1.0 / (1.0 + 0.09 * distance
-                         + 0.032 * distance * distance);
+            1.0 / (1.0 + 0.035 * distance
+                         + 0.004 * distance * distance);
 
         result += (diffuse + specular)
             * uLights[i].color

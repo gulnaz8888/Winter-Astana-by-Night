@@ -54,6 +54,8 @@ int main() {
         Camera camera;
         Snow snow(4000);
         int activeScene = 0;
+        bool lightingEnabled = true;
+        bool lWasPressed = false;
         const glm::vec3 fogColors[2] = {glm::vec3(0.17f, 0.29f, 0.48f), glm::vec3(0.30f, 0.22f, 0.17f)};
         const float fogDensities[2] = {0.006f, 0.0025f};
         const glm::vec3 skyHorizon[2] = {glm::vec3(0.17f, 0.29f, 0.48f), glm::vec3(0.33f, 0.24f, 0.18f)};
@@ -83,6 +85,19 @@ int main() {
             if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
                 glfwSetWindowShouldClose(window, GLFW_TRUE);
             }
+
+            bool lPressed =
+                glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS;
+
+            if (lPressed && !lWasPressed) {
+                lightingEnabled = !lightingEnabled;
+
+                std::cout << "Point lighting: "
+                    << (lightingEnabled ? "ON" : "OFF")
+                    << std::endl;
+            }
+
+            lWasPressed = lPressed;
 
             int width, height;
             glfwGetFramebufferSize(window, &width, &height);
@@ -123,7 +138,13 @@ int main() {
             shader.setVec3("uFogColor", fogColors[activeScene]);
             shader.setFloat("uFogDensity", fogDensities[activeScene]);
 
-            Lights::apply(shader, camera.position, time);
+            Lights::apply(
+                shader,
+                camera.position,
+                time,
+                activeScene,
+                lightingEnabled
+            );
 
 
             if (activeScene == 0) {
