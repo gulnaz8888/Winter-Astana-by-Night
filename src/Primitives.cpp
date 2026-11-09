@@ -1,4 +1,4 @@
-
+﻿
 #include "Primitives.h"
 #include <cmath>
 #include <vector>
@@ -7,12 +7,13 @@
 namespace {
 constexpr float PI = 3.14159265358979f;
 
+
 void pushVertex(
     std::vector<float>& vertices,
     const glm::vec3& position,
     const glm::vec3& normal,
-    float u,
-    float v
+    float u = 0.f,
+    float v = 0.f
 ) {
     vertices.insert(vertices.end(), {
         position.x, position.y, position.z,
@@ -20,7 +21,9 @@ void pushVertex(
         u, v
     });
 }
-}
+
+
+} // end anonymous namespace
 
 namespace Primitives {
 
@@ -230,3 +233,5 @@ Mesh torus(int segments, int sides, float tubeRadius) {
 }
 
 }
+
+
