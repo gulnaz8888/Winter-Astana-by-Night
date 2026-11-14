@@ -52,17 +52,19 @@ int main() {
         Scene scene;
         ExpoScene expoScene;
         Camera camera;
+        camera.position = {0.f, 6.5f, 43.f};
+        camera.target = {0.f, 22.f, -60.f};
         Snow snow(4000);
         int activeScene = 0;
         bool lightingEnabled = true;
         bool lWasPressed = false;
-        const glm::vec3 fogColors[2] = {glm::vec3(0.17f, 0.29f, 0.48f), glm::vec3(0.30f, 0.22f, 0.17f)};
-        const float fogDensities[2] = {0.006f, 0.0025f};
-        const glm::vec3 skyHorizon[2] = {glm::vec3(0.17f, 0.29f, 0.48f), glm::vec3(0.33f, 0.24f, 0.18f)};
-        const glm::vec3 skyTop[2] = {glm::vec3(0.012f, 0.02f, 0.05f), glm::vec3(0.20f, 0.14f, 0.11f)};
-        const float skyStars[2] = {1.f, 0.f};
-        const glm::vec3 camPositions[2] = {glm::vec3(0.f, 5.f, 40.f), glm::vec3(0.f, 5.f, 37.f)};
-        const glm::vec3 camTargets[2] = {glm::vec3(0.f, 20.f, -55.f), glm::vec3(0.f, 28.f, -42.f)};
+        const glm::vec3 fogColors[2] = {glm::vec3(0.055f, 0.085f, 0.15f), glm::vec3(0.30f, 0.22f, 0.17f)};
+        const float fogDensities[2] = {0.0023f, 0.0025f};
+        const glm::vec3 skyHorizon[2] = {glm::vec3(0.055f, 0.085f, 0.15f), glm::vec3(0.33f, 0.24f, 0.18f)};
+        const glm::vec3 skyTop[2] = {glm::vec3(0.005f, 0.01f, 0.028f), glm::vec3(0.20f, 0.14f, 0.11f)};
+        const float skyStars[2] = {0.32f, 0.f};
+        const glm::vec3 camPositions[2] = {glm::vec3(0.f, 6.5f, 43.f), glm::vec3(0.f, 5.f, 37.f)};
+        const glm::vec3 camTargets[2] = {glm::vec3(0.f, 22.f, -60.f), glm::vec3(0.f, 28.f, -42.f)};
         glEnable(GL_CULL_FACE);
 
         float lastFrame = static_cast<float>(glfwGetTime());
@@ -119,7 +121,9 @@ int main() {
                 camera.target = camTargets[activeScene];
             }
 
-            camera.position.x = std::sin(time * 0.25f) * 5.f;
+            if (activeScene == 1) {
+                camera.position.x = std::sin(time * 0.25f) * 5.f;
+            }
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
