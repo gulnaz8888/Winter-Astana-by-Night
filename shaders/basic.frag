@@ -93,6 +93,11 @@ void main() {
 
     vec3 result = ambientStrength * baseColor;
 
+    // Keep the original Northern Lights facade texture visible
+    if (uSceneIndex == 2 && uUseTexture) {
+        result += baseColor * 0.20;
+    }
+
     if (uLightingEnabled) {
 
         // Two main Blinn-Phong point lights

@@ -104,16 +104,26 @@ RiverfrontScene::RiverfrontScene() {
     towerPhoto=std::make_unique<Texture>("assets/textures/northern_lights_reference.png");
     Material photo{{1.35f,1.65f,1.85f},{0.008f,0.02f,0.035f},{},towerPhoto.get()};
     // LED strips: bright lines without washing out the glass texture.
+
+
     Material ledWhite{
         {0.85f, 0.94f, 1.0f},
-        {0.90f, 1.05f, 1.20f},
+        {0.85f, 1.00f, 1.15f},
         {}
     };
+
     Material ledBlue{
         {0.45f, 0.75f, 1.0f},
-        {0.35f, 0.58f, 0.85f},
+        {0.32f, 0.55f, 0.85f},
         {}
     };
+
+    Material ledGold{
+        {1.0f, 0.72f, 0.20f},
+        {1.10f, 0.65f, 0.12f},
+        {}
+    };
+
     Material snow{{0.67f,0.77f,0.90f}, {0.12f,0.16f,0.23f}, {}};
     Material ice{{0.17f,0.36f,0.52f}, {0.035f,0.075f,0.12f}, {}};
     Material iceLines{{0.33f,0.58f,0.72f}, {0.065f,0.12f,0.17f}, {}};
@@ -253,7 +263,7 @@ RiverfrontScene::RiverfrontScene() {
             // Horizontal LED strips, every two floors.
             for (int floor = 0; floor <= floors; floor += 2) {
                 const float t = float(floor) / floors;
-                const float dy = 0.07f / h;
+                const float dy = 0.065f / h;
                 ledBlue.geometry.quad(
                     facePoint(face, t - dy, -0.94f),
                     facePoint(face, t - dy,  0.94f),
@@ -261,6 +271,35 @@ RiverfrontScene::RiverfrontScene() {
                     facePoint(face, t + dy, -0.94f)
                 );
             }
+
+
+            // Golden vertical LED accents
+            // Front facade only
+            if (face == 0) {
+                const float goldPositions[] = { -0.12f, 0.12f };
+                const float goldHalfWidth = 0.035f;
+
+                for (float s : goldPositions) {
+                    for (int segment = 0; segment < 35; ++segment) {
+                        float t0 = 0.10f + 0.70f * segment / 35.0f;
+                        float t1 = 0.10f + 0.70f * (segment + 1) / 35.0f;
+
+                        glm::vec3 a = facePoint(face, t0, s - goldHalfWidth);
+                        glm::vec3 b = facePoint(face, t0, s + goldHalfWidth);
+                        glm::vec3 c = facePoint(face, t1, s + goldHalfWidth);
+                        glm::vec3 d = facePoint(face, t1, s - goldHalfWidth);
+
+                        a.z += 0.04f;
+                        b.z += 0.04f;
+                        c.z += 0.04f;
+                        d.z += 0.04f;
+
+                        ledGold.geometry.quad(a, b, c, d);
+                    }
+                }
+            }
+
+
         }
 
         snow.geometry.box({center(1),h+2,z},{width(1)+0.25f,0.25f,16.25f});
@@ -413,7 +452,7 @@ RiverfrontScene::RiverfrontScene() {
     for (int i=0; i<9; ++i) person(skaters[i],i%3 == 0 ? 2.1f : 3.0f,i,true);
 
     for (Material* m : { &snow,&ice,&iceLines,&stone,&rail,&photo,
-                   &ledWhite,&ledBlue,
+                    &ledWhite,&ledBlue,&ledGold,
                    &ochre,&terracotta,&cream,&roof,&warm,&cool,&darkWindows,
                    &evergreen,&crimson,&skin,&gold,&fairyLights }) {
         if (m->geometry.indices.empty()) continue;
@@ -423,7 +462,8 @@ RiverfrontScene::RiverfrontScene() {
         node->texture=m->texture;
         node->color=m->color;
         node->emissive=m->emission;
-        node->isArchitecturalLED = (m == &ledWhite || m == &ledBlue);
+        node->isArchitecturalLED =
+            (m == &ledWhite || m == &ledBlue || m == &ledGold);
         root.addChild(std::move(node));
     }
 
