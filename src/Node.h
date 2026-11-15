@@ -1,11 +1,10 @@
-
 #pragma once
 
 #include <memory>
 #include <vector>
+#include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-
 #include "Mesh.h"
 #include "Shader.h"
 #include "Texture.h"
@@ -20,6 +19,8 @@ struct Node {
     glm::vec3 color{1.f};
     glm::vec3 emissive{0.f};
     glm::vec3 uvScale{1.f};
+    bool isBaiterek = false;
+    bool isArchitecturalLED = false;
 
     std::vector<std::unique_ptr<Node>> children;
 
@@ -30,26 +31,28 @@ struct Node {
 
     glm::mat4 localMatrix() const {
         glm::mat4 m(1.f);
-
         m = glm::translate(m, position);
         m = glm::rotate(m, rotation.y, glm::vec3(0.f, 1.f, 0.f));
         m = glm::rotate(m, rotation.x, glm::vec3(1.f, 0.f, 0.f));
         m = glm::rotate(m, rotation.z, glm::vec3(0.f, 0.f, 1.f));
-
         return m;
     }
 
-    void draw(const Shader& shader, const glm::mat4& parentWorld) const {
+    void draw(const Shader& shader, const glm::mat4& parentWorld,
+              bool parentIsBaiterek = false) const {
         glm::mat4 world = parentWorld * localMatrix();
+        bool markedAsBaiterek = parentIsBaiterek || isBaiterek;
 
         if (mesh) {
             shader.setMat4("uModel", glm::scale(world, scale));
             shader.setVec3("uColor", color);
             shader.setVec3("uEmissive", emissive);
             shader.setVec3("uUVScale", uvScale);
-
             shader.setInt("uUseTexture", texture != nullptr ? 1 : 0);
             shader.setInt("uTexture", 0);
+            shader.setInt("uIsBaiterek", markedAsBaiterek ? 1 : 0);
+            // Must be set for EVERY mesh, so other meshes reset it to zero.
+            shader.setInt("uIsArchitecturalLED", isArchitecturalLED ? 1 : 0);
 
             if (texture) {
                 texture->bind(0);
@@ -57,12 +60,10 @@ struct Node {
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, 0);
             }
-
             mesh->draw();
         }
-
         for (const auto& child : children) {
-            child->draw(shader, world);
+            child->draw(shader, world, markedAsBaiterek);
         }
     }
 };

@@ -246,6 +246,7 @@ void Scene::buildKhanShatyr() {
 void Scene::buildBaiterek() {
     auto group=std::make_unique<Node>();
     group->position={0,0.65f,-60};
+    group->isBaiterek = true;
     Node* monument=root.addChild(std::move(group));
     SceneGeometry ribs,lattice,shaft,base,collar,panes;
     const float heights[]={0,10,20,26,31,36,41,47};
