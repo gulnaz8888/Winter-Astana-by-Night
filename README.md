@@ -11,7 +11,17 @@ All libraries (GLFW, GLM, GLAD, stb_image) are included in `external/`.
     ./build/winter
 
 ## Controls
-TBD
+| Key | Action |
+|-----|--------|
+| `1` | Winter promenade and Baiterek |
+| `2` | EXPO and Nur Alem |
+| `3` | Ishim riverfront |
+| `L` | Toggle the two point lights |
+| `Esc` | Exit |
+
+The Baiterek and riverfront scenes currently use fixed camera presets. The EXPO
+scene retains its automatic camera movement. Interactive camera controls are a
+separate team task.
 
 ## Features (requirements R1-R8)
 | Req | Feature | Where |
@@ -34,3 +44,21 @@ TBD
 | Anetbayeva Dilyara | Particle system, performance, and repository (R7, R8, Stretch Goals)  |
 
 
+
+## Scene geometry
+
+The first scene contains a snowy pedestrian promenade with evergreens, benches,
+street lamps and hanging lights. Baiterek uses a central shaft, 24 flared ribs,
+diagonal lattice and a gold sphere with a pane grid. Two gold towers, Khan Shatyr
+and a mosque form the background; two nearby buildings frame the sides.
+
+The third scene contains a frozen river, snowy banks, a staircase and decorative
+railing, exactly three curved Northern Lights towers, residential frontage,
+holiday stalls, visitors, skaters and hanging lights along both banks. The user-
+supplied photograph is mapped to facade regions of the three towers. Static
+repeated details are batched by material.
+
+Scene architecture and geometry are in `Scene.cpp`, `SceneGeometry.h` and
+`RiverfrontScene.cpp`. Shared shaders, lighting and snowfall retain their existing
+implementation. Ice texturing, interactive cameras and fireworks remain team
+handoff tasks.
