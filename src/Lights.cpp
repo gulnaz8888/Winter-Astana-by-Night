@@ -19,6 +19,7 @@ void Lights::apply(
 
     glm::vec3 light1Pos;
     glm::vec3 light2Pos;
+    glm::vec3 light1Color(1.0f, 0.80f, 0.45f);
 
     float light1Intensity;
     float light2Intensity;
@@ -39,7 +40,7 @@ void Lights::apply(
         light2Intensity = 2.5f;
 
     }
-    else {
+    else if (sceneIndex == 1) {
         // SCENE 2: EXPO
 
         // Warm light near the Christmas tree
@@ -53,6 +54,28 @@ void Lights::apply(
             -42.0f + std::sin(time * 0.5f) * 18.0f
         );
         light2Intensity = 3.0f;
+
+        float r = 0.6f + 0.4f * std::sin(time * 1.2f);
+        float g = 0.6f + 0.4f * std::sin(time * 1.2f + 2.1f);
+        float b = 0.6f + 0.4f * std::sin(time * 1.2f + 4.2f);
+
+        light1Color = glm::vec3(r, g, b);
+    }
+
+    else {
+        // SCENE 3: Ishim Riverfront
+
+        // Static warm light near the promenade
+        light1Pos = glm::vec3(0.0f, 14.0f, 12.0f);
+        light1Intensity = 3.0f;
+
+        // Moving blue light above the frozen river
+        light2Pos = glm::vec3(
+            std::cos(time * 0.4f) * 35.0f,
+            18.0f,
+            -85.0f + std::sin(time * 0.4f) * 15.0f
+        );
+        light2Intensity = 3.5f;
     }
 
     // When lighting is disabled, both point lights are off

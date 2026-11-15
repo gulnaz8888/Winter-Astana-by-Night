@@ -103,6 +103,17 @@ bool lit(int building, int floor, int column) {
 RiverfrontScene::RiverfrontScene() {
     towerPhoto=std::make_unique<Texture>("assets/textures/northern_lights_reference.png");
     Material photo{{1.35f,1.65f,1.85f},{0.008f,0.02f,0.035f},{},towerPhoto.get()};
+    // LED strips: bright lines without washing out the glass texture.
+    Material ledWhite{
+        {0.85f, 0.94f, 1.0f},
+        {0.90f, 1.05f, 1.20f},
+        {}
+    };
+    Material ledBlue{
+        {0.45f, 0.75f, 1.0f},
+        {0.35f, 0.58f, 0.85f},
+        {}
+    };
     Material snow{{0.67f,0.77f,0.90f}, {0.12f,0.16f,0.23f}, {}};
     Material ice{{0.17f,0.36f,0.52f}, {0.035f,0.075f,0.12f}, {}};
     Material iceLines{{0.33f,0.58f,0.72f}, {0.065f,0.12f,0.17f}, {}};
@@ -202,6 +213,56 @@ RiverfrontScene::RiverfrontScene() {
                                   {0.55f,(y1-y0)*0.5f,0.04f});
             }
         }
+
+        // Architectural LED strips on all four tower facades.
+        // Quads follow the same curved profile as the photo facades.
+        constexpr float offset = 0.25f;
+        constexpr float halfStrip = 0.14f;
+        constexpr int columns = 10;
+
+        auto facePoint = [&](int face, float t, float s) -> glm::vec3 {
+            const float cx = center(t);
+            const float hw = width(t) * 0.5f;
+            const float y = 2.0f + h * t;
+            // For each face, s goes from left to right as viewed from outside.
+            if (face == 0) return {cx + hw * s, y, z + 8.0f + offset}; // front +Z
+            if (face == 1) return {cx - hw * s, y, z - 8.0f - offset}; // back -Z
+            if (face == 2) return {cx + hw + offset, y, z - 8.0f * s}; // right +X
+            return {cx - hw - offset, y, z + 8.0f * s};               // left -X
+        };
+
+        for (int face = 0; face < 4; ++face) {
+            // Continuous vertical LED strips; one quad per floor follows the bend.
+            for (int col = 0; col <= columns; ++col) {
+                const float s = -0.90f + col * (1.80f / columns);
+                // The horizontal width parameter for side faces spans 16 world units.
+                const float delta = (face < 2) ? (halfStrip * 2.0f / w)
+                                               : (halfStrip / 8.0f);
+                for (int floor = 0; floor < floors; ++floor) {
+                    const float t0 = float(floor) / floors;
+                    const float t1 = float(floor + 1) / floors;
+                    const auto a = facePoint(face, t0, s - delta);
+                    const auto b = facePoint(face, t0, s + delta);
+                    const auto c = facePoint(face, t1, s + delta);
+                    const auto d = facePoint(face, t1, s - delta);
+                    // Front/back and sides use outward-facing winding.
+                    Material& led = col % 4 == 0 ? ledBlue : ledWhite;
+                    led.geometry.quad(a, b, c, d);
+                }
+            }
+            // Horizontal LED strips, every two floors.
+            for (int floor = 0; floor <= floors; floor += 2) {
+                const float t = float(floor) / floors;
+                const float dy = 0.07f / h;
+                ledBlue.geometry.quad(
+                    facePoint(face, t - dy, -0.94f),
+                    facePoint(face, t - dy,  0.94f),
+                    facePoint(face, t + dy,  0.94f),
+                    facePoint(face, t + dy, -0.94f)
+                );
+            }
+        }
+
         snow.geometry.box({center(1),h+2,z},{width(1)+0.25f,0.25f,16.25f});
     }
 
@@ -351,9 +412,10 @@ RiverfrontScene::RiverfrontScene() {
     };
     for (int i=0; i<9; ++i) person(skaters[i],i%3 == 0 ? 2.1f : 3.0f,i,true);
 
-    for (Material* m : {&snow,&ice,&iceLines,&stone,&rail,&photo,
-                       &ochre,&terracotta,&cream,&roof,&warm,&cool,&darkWindows,
-                       &evergreen,&crimson,&skin,&gold,&fairyLights}) {
+    for (Material* m : { &snow,&ice,&iceLines,&stone,&rail,&photo,
+                   &ledWhite,&ledBlue,
+                   &ochre,&terracotta,&cream,&roof,&warm,&cool,&darkWindows,
+                   &evergreen,&crimson,&skin,&gold,&fairyLights }) {
         if (m->geometry.indices.empty()) continue;
         meshes.push_back(std::make_unique<Mesh>(m->geometry.vertices,m->geometry.indices));
         auto node=std::make_unique<Node>();
@@ -361,6 +423,7 @@ RiverfrontScene::RiverfrontScene() {
         node->texture=m->texture;
         node->color=m->color;
         node->emissive=m->emission;
+        node->isArchitecturalLED = (m == &ledWhite || m == &ledBlue);
         root.addChild(std::move(node));
     }
 

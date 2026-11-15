@@ -155,6 +155,9 @@ int main() {
                 lightingEnabled
             );
 
+            shader.setInt("uLightingEnabled", lightingEnabled ? 1 : 0);
+            shader.setInt("uSceneIndex", activeScene);
+            shader.setFloat("uTime", time);
 
             if (activeScene == 0) {
                 scene.update(time);
@@ -171,6 +174,7 @@ int main() {
                 camera.view(),
                 camera.projection((float)width / height)
             );
+
 
             glfwSwapBuffers(window);
             glfwPollEvents();
