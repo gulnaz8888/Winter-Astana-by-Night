@@ -65,7 +65,7 @@ struct Node {
             shader.setInt("uUseTexture", texture != nullptr ? 1 : 0);
             shader.setInt("uTexture", 0);
             shader.setInt("uIsBaiterek", markedAsBaiterek ? 1 : 0);
-            // Must be set for EVERY mesh, so other meshes reset it to zero.
+
             shader.setInt("uIsArchitecturalLED", isArchitecturalLED ? 1 : 0);
             shader.setInt("uWowBuildingId", activeBuildingId);
             shader.setInt("uWowWindow", wowWindow ? 1 : 0);
