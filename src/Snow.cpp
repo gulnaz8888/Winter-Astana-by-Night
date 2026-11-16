@@ -1,5 +1,7 @@
+
 #include "Snow.h"
 
+#include <algorithm>
 #include <cstdlib>
 
 Snow::Snow(int particleCount) {
@@ -14,7 +16,6 @@ Snow::Snow(int particleCount) {
     glGenBuffers(1, &VBO);
 
     glBindVertexArray(VAO);
-
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
     glBufferData(
@@ -43,32 +44,52 @@ Snow::~Snow() {
     glDeleteVertexArrays(1, &VAO);
 }
 
-float Snow::randomFloat(float minValue, float maxValue) {
+float Snow::randomFloat(
+    float minValue,
+    float maxValue
+) {
     float normalized =
         static_cast<float>(std::rand()) /
         static_cast<float>(RAND_MAX);
 
-    return minValue + normalized * (maxValue - minValue);
+    return minValue +
+        normalized * (maxValue - minValue);
 }
 
-void Snow::resetParticle(Particle& particle, bool randomHeight) {
-    particle.position.x = randomFloat(-40.0f, 40.0f);
-    particle.position.z = randomFloat(-30.0f, 20.0f);
+void Snow::resetParticle(
+    Particle& particle,
+    bool randomHeight
+) {
+    particle.position.x = randomFloat(
+        -40.0f, 40.0f
+    );
+
+    particle.position.z = randomFloat(
+        -30.0f, 20.0f
+    );
 
     if (randomHeight) {
-        particle.position.y = randomFloat(5.0f, 100.0f);
+        particle.position.y = randomFloat(
+            5.0f, 100.0f
+        );
     } else {
-        particle.position.y = randomFloat(80.0f, 110.0f);
+        particle.position.y = randomFloat(
+            80.0f, 110.0f
+        );
     }
 
-    particle.speed = randomFloat(4.0f, 12.0f);
+    particle.speed = randomFloat(
+        4.0f, 12.0f
+    );
 }
 
 void Snow::update(float deltaTime) {
     for (auto& particle : particles) {
-        particle.position.y -= particle.speed * deltaTime;
+        particle.position.y -=
+            particle.speed * deltaTime;
 
-        particle.position.x += 0.5f * deltaTime;
+        particle.position.x +=
+            0.5f * deltaTime;
 
         if (particle.position.y < 0.0f) {
             resetParticle(particle, false);
@@ -79,35 +100,74 @@ void Snow::update(float deltaTime) {
 void Snow::draw(
     const Shader& shader,
     const glm::mat4& view,
-    const glm::mat4& projection
+    const glm::mat4& projection,
+    int visibleCount
 ) {
-    for (std::size_t i = 0; i < particles.size(); ++i) {
+    // -1 means draw all snowflakes.
+    int total = static_cast<int>(
+        particles.size()
+    );
+
+    int count = total;
+
+    if (visibleCount >= 0) {
+        count = std::min(
+            visibleCount,
+            total
+        );
+    }
+
+    if (count <= 0) {
+        return;
+    }
+
+    // Update only the particles we will draw.
+    for (int i = 0; i < count; ++i) {
         positions[i] = particles[i].position;
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(
+        GL_ARRAY_BUFFER,
+        VBO
+    );
 
     glBufferSubData(
         GL_ARRAY_BUFFER,
         0,
-        positions.size() * sizeof(glm::vec3),
+        static_cast<GLsizeiptr>(count) *
+            sizeof(glm::vec3),
         positions.data()
     );
 
     shader.use();
-    shader.setMat4("uView", view);
-    shader.setMat4("uProj", projection);
 
-    glEnable(GL_PROGRAM_POINT_SIZE);
+    shader.setMat4(
+        "uView",
+        view
+    );
+
+    shader.setMat4(
+        "uProj",
+        projection
+    );
+
+    glEnable(
+        GL_PROGRAM_POINT_SIZE
+    );
+
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glBlendFunc(
+        GL_SRC_ALPHA,
+        GL_ONE_MINUS_SRC_ALPHA
+    );
 
     glBindVertexArray(VAO);
 
     glDrawArrays(
         GL_POINTS,
         0,
-        static_cast<GLsizei>(positions.size())
+        static_cast<GLsizei>(count)
     );
 
     glBindVertexArray(0);
