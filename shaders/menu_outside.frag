@@ -25,5 +25,7 @@ void main(){
             c+=tint*exp(-dot(delta,delta)*0.55)*on;
         }
     }
+    c=vec3(1.0)-exp(-max(c,vec3(0.0))*1.15);
+    c=pow(c,vec3(1.0/2.2));
     FragColor=vec4(c,1);
 }
