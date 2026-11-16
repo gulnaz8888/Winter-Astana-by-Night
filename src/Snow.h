@@ -16,6 +16,9 @@ public:
     Snow(const Snow&) = delete;
     Snow& operator=(const Snow&) = delete;
 
+    // Set horizontal wind velocity.
+    void setWind(float x, float z);
+
     void update(float deltaTime);
 
     void draw(
@@ -36,6 +39,9 @@ private:
 
     GLuint VAO = 0;
     GLuint VBO = 0;
+
+    // Original gentle wind.
+    glm::vec3 windVelocity{0.5f, 0.f, 0.f};
 
     float randomFloat(
         float minValue,
