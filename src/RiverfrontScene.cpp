@@ -103,7 +103,7 @@ bool lit(int building, int floor, int column) {
 RiverfrontScene::RiverfrontScene() {
     towerPhoto=std::make_unique<Texture>("assets/textures/northern_lights_reference.png");
     Material photo{{1.35f,1.65f,1.85f},{0.008f,0.02f,0.035f},{},towerPhoto.get()};
-    // LED strips: bright lines without washing out the glass texture.
+
 
 
     Material ledWhite{
@@ -224,8 +224,8 @@ RiverfrontScene::RiverfrontScene() {
             }
         }
 
-        // Architectural LED strips on all four tower facades.
-        // Quads follow the same curved profile as the photo facades.
+
+
         constexpr float offset = 0.25f;
         constexpr float halfStrip = 0.14f;
         constexpr int columns = 10;
@@ -234,18 +234,18 @@ RiverfrontScene::RiverfrontScene() {
             const float cx = center(t);
             const float hw = width(t) * 0.5f;
             const float y = 2.0f + h * t;
-            // For each face, s goes from left to right as viewed from outside.
-            if (face == 0) return {cx + hw * s, y, z + 8.0f + offset}; // front +Z
-            if (face == 1) return {cx - hw * s, y, z - 8.0f - offset}; // back -Z
-            if (face == 2) return {cx + hw + offset, y, z - 8.0f * s}; // right +X
-            return {cx - hw - offset, y, z + 8.0f * s};               // left -X
+
+            if (face == 0) return {cx + hw * s, y, z + 8.0f + offset};
+            if (face == 1) return {cx - hw * s, y, z - 8.0f - offset};
+            if (face == 2) return {cx + hw + offset, y, z - 8.0f * s};
+            return {cx - hw - offset, y, z + 8.0f * s};
         };
 
         for (int face = 0; face < 4; ++face) {
-            // Continuous vertical LED strips; one quad per floor follows the bend.
+
             for (int col = 0; col <= columns; ++col) {
                 const float s = -0.90f + col * (1.80f / columns);
-                // The horizontal width parameter for side faces spans 16 world units.
+
                 const float delta = (face < 2) ? (halfStrip * 2.0f / w)
                                                : (halfStrip / 8.0f);
                 for (int floor = 0; floor < floors; ++floor) {
@@ -255,12 +255,12 @@ RiverfrontScene::RiverfrontScene() {
                     const auto b = facePoint(face, t0, s + delta);
                     const auto c = facePoint(face, t1, s + delta);
                     const auto d = facePoint(face, t1, s - delta);
-                    // Front/back and sides use outward-facing winding.
+
                     Material& led = col % 4 == 0 ? ledBlue : ledWhite;
                     led.geometry.quad(a, b, c, d);
                 }
             }
-            // Horizontal LED strips, every two floors.
+
             for (int floor = 0; floor <= floors; floor += 2) {
                 const float t = float(floor) / floors;
                 const float dy = 0.065f / h;
@@ -273,8 +273,8 @@ RiverfrontScene::RiverfrontScene() {
             }
 
 
-            // Golden vertical LED accents
-            // Front facade only
+
+
             if (face == 0) {
                 const float goldPositions[] = { -0.12f, 0.12f };
                 const float goldHalfWidth = 0.035f;

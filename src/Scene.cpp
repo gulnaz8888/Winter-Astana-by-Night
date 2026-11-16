@@ -14,7 +14,7 @@ const glm::vec3 metal(0.075f, 0.10f, 0.15f);
 const glm::vec3 warm(1.f, 0.85f, 0.52f);
 const glm::vec3 warmGlow(1.f, 0.73f, 0.33f);
 
-// Fluffy snowdrifts
+
 void fluffyMound(
     SceneGeometry& g,
     float x,
@@ -41,7 +41,7 @@ void fluffyMound(
     }
 }
 
-// Snow patches on conifer branches
+
 void fluffyTreeSnow(
     SceneGeometry& g,
     float x,
@@ -105,7 +105,7 @@ void fluffyTreeSnow(
     );
 }
 
-} // namespace
+}
 
 Scene::Scene()
     : sphere(Primitives::sphere(32, 48)) {
@@ -171,9 +171,9 @@ Node* Scene::attach(
     return parent.addChild(std::move(node));
 }
 
-// =====================================================
-// GROUND
-// =====================================================
+
+
+
 
 void Scene::buildGround() {
     SceneGeometry ground, path, borders, stone, snowdrifts;
@@ -286,16 +286,16 @@ void Scene::buildGround() {
     );
 }
 
-// =====================================================
-// TREES AND IMPROVED BENCHES
-// =====================================================
+
+
+
 
 void Scene::buildAvenue() {
     SceneGeometry green, treeSnow, trunks;
     SceneGeometry wood, iron, benchSnow, groundSnow;
     SceneGeometry benchGlow;
 
-    // Trees
+
     for (int i = 0; i < 7; ++i) {
         float z = 34.f - i * 13.f;
 
@@ -336,7 +336,7 @@ void Scene::buildAvenue() {
         }
     }
 
-    // Improved benches
+
     for (int i = 0; i < 5; ++i) {
         float z = 26.f - i * 15.f;
 
@@ -344,7 +344,7 @@ void Scene::buildAvenue() {
             float x = side * 10.7f;
             float backX = x + side * 0.66f;
 
-            // Five wooden seat slats
+
             for (int plank = 0; plank < 5; ++plank) {
                 float seatX =
                     x - side * 0.43f +
@@ -356,7 +356,7 @@ void Scene::buildAvenue() {
                 );
             }
 
-            // Four wooden backrest slats
+
             for (int plank = 0; plank < 4; ++plank) {
                 float y = 1.04f + plank * 0.21f;
 
@@ -366,7 +366,7 @@ void Scene::buildAvenue() {
                 );
             }
 
-            // Metal legs and armrests
+
             for (float dz : {-1.23f, 1.23f}) {
                 iron.box(
                     {x - side * 0.35f, 0.40f, z + dz},
@@ -389,7 +389,7 @@ void Scene::buildAvenue() {
                 );
             }
 
-            // Fluffy snow on seats and backrests
+
             for (int k = 0; k < 7; ++k) {
                 float zz = z - 1.43f + k * 0.47f;
 
@@ -414,7 +414,7 @@ void Scene::buildAvenue() {
                 );
             }
 
-            // Warm decorative strip under each seat
+
             benchGlow.box(
                 {x, 0.68f, z},
                 {0.055f, 0.035f, 2.85f}
@@ -475,9 +475,9 @@ void Scene::buildAvenue() {
     );
 }
 
-// =====================================================
-// LAMPS AND GARLANDS
-// =====================================================
+
+
+
 
 void Scene::buildLamps() {
     SceneGeometry posts, hoods, bulbs, cables, snow;
@@ -581,9 +581,9 @@ void Scene::buildLamps() {
     attach(root, snow, snowColor, snowGlow);
 }
 
-// =====================================================
-// BUILDINGS
-// =====================================================
+
+
+
 
 void Scene::buildSkyline() {
     SceneGeometry gold, frames, glass, light, snow, buildings;
@@ -759,9 +759,9 @@ void Scene::buildSkyline() {
     );
 }
 
-// =====================================================
-// MOSQUE
-// =====================================================
+
+
+
 
 void Scene::buildMosque() {
     auto group = std::make_unique<Node>();
@@ -889,9 +889,9 @@ void Scene::buildMosque() {
     }
 }
 
-// =====================================================
-// KHAN SHATYR
-// =====================================================
+
+
+
 
 void Scene::buildKhanShatyr() {
     auto group = std::make_unique<Node>();
@@ -981,15 +981,15 @@ void Scene::buildKhanShatyr() {
     }
 }
 
-// =====================================================
-// BAITEREK — TEAM LIGHTING PRESERVED
-// =====================================================
+
+
+
 
 void Scene::buildBaiterek() {
     auto group = std::make_unique<Node>();
     group->position = {0, 0.65f, -60};
 
-    // Required for architectural lighting.
+
     group->isBaiterek = true;
 
     Node* monument = root.addChild(std::move(group));
@@ -1231,9 +1231,9 @@ void Scene::buildBaiterek() {
     );
 }
 
-// =====================================================
-// UPDATE AND DRAW
-// =====================================================
+
+
+
 
 void Scene::update(float time) {
     if (beaconPivot) {

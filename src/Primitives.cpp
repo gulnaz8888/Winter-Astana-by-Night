@@ -1,4 +1,4 @@
-﻿
+
 #include "Primitives.h"
 #include <cmath>
 #include <vector>
@@ -23,7 +23,7 @@ void pushVertex(
 }
 
 
-} // end anonymous namespace
+}
 
 namespace Primitives {
 

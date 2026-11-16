@@ -96,26 +96,26 @@ void Snow::resetParticle(
 }
 
 void Snow::update(float deltaTime) {
-    // Movement remains independent of frame rate.
-    // Clamp large time jumps when switching windows.
+
+
     deltaTime = std::clamp(
         deltaTime, 0.f, 0.05f
     );
 
     for (auto& particle : particles) {
-        // Snow falls downward.
+
         particle.position.y -=
             particle.speed * deltaTime;
 
-        // Wind moves snow horizontally.
+
         particle.position.x +=
             windVelocity.x * deltaTime;
 
         particle.position.z +=
             windVelocity.z * deltaTime;
 
-        // Wrap particles across the snowy area.
-        // This prevents strong wind from emptying the scene.
+
+
         if (particle.position.x > 40.f) {
             particle.position.x -= 80.f;
         } else if (particle.position.x < -40.f) {
@@ -128,7 +128,7 @@ void Snow::update(float deltaTime) {
             particle.position.z += 50.f;
         }
 
-        // Recycle particles reaching the ground.
+
         if (particle.position.y < 0.f) {
             resetParticle(particle, false);
         }

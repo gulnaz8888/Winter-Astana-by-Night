@@ -17,6 +17,7 @@
 #include "Lights.h"
 #include "Snow.h"
 #include "Fireworks.h"
+#include "LrtMenu.h"
 
 static void onResize(GLFWwindow*, int width, int height) {
     glViewport(0, 0, width, height);
@@ -90,6 +91,10 @@ int main() {
         ExpoScene expoScene;
         RiverfrontScene riverfrontScene;
 
+        LrtMenu menu;
+        bool menuOpen = true;
+        bool mouseWasPressed = false;
+
         Camera camera;
         camera.position = {0.f, 6.5f, 43.f};
         camera.target = {0.f, 22.f, -60.f};
@@ -105,11 +110,9 @@ int main() {
         bool fireworksEnabled = true;
         bool fWasPressed = false;
 
-        // NEW: Automatic snow toggle
         bool autoSnowEnabled = true;
         bool nWasPressed = false;
 
-        // Wind settings
         float windDirection = 1.f;
         float windStrength = 0.5f;
 
@@ -207,7 +210,6 @@ int main() {
                 );
             }
 
-            // Lighting toggle: L
             bool lPressed =
                 glfwGetKey(window, GLFW_KEY_L)
                 == GLFW_PRESS;
@@ -222,7 +224,6 @@ int main() {
 
             lWasPressed = lPressed;
 
-            // Fireworks toggle: F
             bool fPressed =
                 glfwGetKey(window, GLFW_KEY_F)
                 == GLFW_PRESS;
@@ -237,7 +238,6 @@ int main() {
 
             fWasPressed = fPressed;
 
-            // NEW: Automatic snow toggle: N
             bool nPressed =
                 glfwGetKey(window, GLFW_KEY_N)
                 == GLFW_PRESS;
@@ -252,7 +252,6 @@ int main() {
 
             nWasPressed = nPressed;
 
-            // Wind controls
             bool leftPressed =
                 glfwGetKey(window, GLFW_KEY_LEFT)
                 == GLFW_PRESS;
@@ -339,26 +338,44 @@ int main() {
                 continue;
             }
 
-            // Switch scenes
             int requested = activeScene;
+            bool choose = false;
+            if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) menuOpen = true;
+            int windowWidth, windowHeight;
+            glfwGetWindowSize(window, &windowWidth, &windowHeight);
+            double cursorX, cursorY;
+            glfwGetCursorPos(window, &cursorX, &cursorY);
+            menu.update(time);
+            int hovered = menu.pick(cursorX, cursorY, windowWidth, windowHeight);
+            bool mousePressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+            if (menuOpen && mousePressed && !mouseWasPressed && hovered >= 0) {
+                requested = hovered;
+                choose = true;
+            }
+            mouseWasPressed = mousePressed;
 
             if (glfwGetKey(
                 window, GLFW_KEY_1
             ) == GLFW_PRESS) {
                 requested = 0;
+                choose = true;
             }
 
             if (glfwGetKey(
                 window, GLFW_KEY_2
             ) == GLFW_PRESS) {
                 requested = 1;
+                choose = true;
             }
 
             if (glfwGetKey(
                 window, GLFW_KEY_3
             ) == GLFW_PRESS) {
                 requested = 2;
+                choose = true;
             }
+
+            if (choose) menuOpen = false;
 
             if (requested != activeScene) {
                 activeScene = requested;
@@ -368,6 +385,15 @@ int main() {
 
                 camera.target =
                     camTargets[activeScene];
+            }
+
+            if (menuOpen) {
+                glClearColor(0.005f, 0.012f, 0.03f, 1.f);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                menu.draw(shader, static_cast<float>(width) / height, hovered);
+                glfwSwapBuffers(window);
+                glfwPollEvents();
+                continue;
             }
 
             if (activeScene == 1) {
@@ -388,7 +414,6 @@ int main() {
                 GL_DEPTH_BUFFER_BIT
             );
 
-            // Sky
             glDisable(GL_DEPTH_TEST);
 
             skyShader.use();
@@ -406,7 +431,6 @@ int main() {
 
             glEnable(GL_DEPTH_TEST);
 
-            // Main shader
             shader.use();
 
             shader.setMat4("uView", view);
@@ -443,13 +467,11 @@ int main() {
 
             shader.setFloat("uTime", time);
 
-            // NEW: Send snow switch to fragment shader.
             shader.setInt(
                 "uAutoSnowEnabled",
                 autoSnowEnabled ? 1 : 0
             );
 
-            // Draw active scene
             if (activeScene == 0) {
                 scene.update(time);
                 scene.draw(shader);
@@ -462,7 +484,6 @@ int main() {
                 riverfrontScene.draw(shader);
             }
 
-            // Existing snow particles
             snow.update(deltaTime);
 
             snow.draw(
@@ -472,7 +493,6 @@ int main() {
                 snowCounts[activeScene]
             );
 
-            // Fireworks only in Riverfront
             if (
                 activeScene == 2 &&
                 fireworksEnabled

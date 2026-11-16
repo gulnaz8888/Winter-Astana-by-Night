@@ -27,7 +27,7 @@ Fireworks::Fireworks() {
         GL_DYNAMIC_DRAW
     );
 
-    // Particle position
+
     glVertexAttribPointer(
         0,
         3,
@@ -39,7 +39,7 @@ Fireworks::Fireworks() {
 
     glEnableVertexAttribArray(0);
 
-    // Particle color
+
     glVertexAttribPointer(
         1,
         3,
@@ -51,7 +51,7 @@ Fireworks::Fireworks() {
 
     glEnableVertexAttribArray(1);
 
-    // Particle transparency
+
     glVertexAttribPointer(
         2,
         1,
@@ -66,7 +66,7 @@ Fireworks::Fireworks() {
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    // First firework appears immediately
+
     spawnBurst();
 }
 
@@ -93,21 +93,21 @@ float Fireworks::randomFloat(
 
 void Fireworks::spawnBurst() {
 
-    // Fireworks above Riverfront skyline
+
     const glm::vec3 positions[3] = {
         {-68.f, 95.f, -145.f},
         {0.f, 110.f, -165.f},
         {68.f, 98.f, -145.f}
     };
 
-    // Bright festive colors
+
     const glm::vec3 colors[6] = {
-        {1.0f, 0.72f, 0.14f},  // Gold
-        {0.28f, 0.75f, 1.0f},  // Ice blue
-        {1.0f, 0.32f, 0.72f},  // Pink
-        {0.60f, 1.0f, 0.72f},  // Mint
-        {1.0f, 0.92f, 0.62f},  // Champagne
-        {0.76f, 0.45f, 1.0f}   // Purple
+        {1.0f, 0.72f, 0.14f},
+        {0.28f, 0.75f, 1.0f},
+        {1.0f, 0.32f, 0.72f},
+        {0.60f, 1.0f, 0.72f},
+        {1.0f, 0.92f, 0.62f},
+        {0.76f, 0.45f, 1.0f}
     };
 
     glm::vec3 center =
@@ -118,7 +118,7 @@ void Fireworks::spawnBurst() {
 
     ++burstNumber;
 
-    // Larger explosions: 200 sparks
+
     const int sparkCount = 200;
 
     for (int i = 0; i < sparkCount; ++i) {
@@ -130,7 +130,7 @@ void Fireworks::spawnBurst() {
             break;
         }
 
-        // Random spherical direction
+
         float theta = randomFloat(
             0.f,
             2.f * PI
@@ -151,13 +151,13 @@ void Fireworks::spawnBurst() {
             horizontal * std::sin(theta)
         );
 
-        // Increased explosion speed
+
         float speed = randomFloat(
             24.f,
             39.f
         );
 
-        // Sparks remain visible longer
+
         float lifetime = randomFloat(
             2.0f,
             2.8f
@@ -173,7 +173,7 @@ void Fireworks::spawnBurst() {
         spark.life = lifetime;
         spark.maxLife = lifetime;
 
-        // Warm white highlights
+
         if (i % 8 == 0) {
             spark.color = {
                 1.0f,
@@ -182,7 +182,7 @@ void Fireworks::spawnBurst() {
             };
         }
 
-        // Slightly brighter color variations
+
         if (i % 13 == 0) {
             spark.color = {
                 1.0f,
@@ -197,7 +197,7 @@ void Fireworks::spawnBurst() {
 
 void Fireworks::update(float deltaTime) {
 
-    // Prevent large simulation jumps
+
     deltaTime = std::clamp(
         deltaTime,
         0.f,
@@ -206,7 +206,7 @@ void Fireworks::update(float deltaTime) {
 
     spawnTimer += deltaTime;
 
-    // New explosion approximately every 1.3 seconds
+
     if (spawnTimer >= 1.3f) {
         spawnTimer -= 1.3f;
         spawnBurst();
@@ -216,11 +216,11 @@ void Fireworks::update(float deltaTime) {
 
         p.life -= deltaTime;
 
-        // Gravity makes sparks fall
+
         p.velocity.y -=
             6.0f * deltaTime;
 
-        // Gradual air resistance
+
         float drag = std::exp(
             -0.30f * deltaTime
         );
@@ -231,7 +231,7 @@ void Fireworks::update(float deltaTime) {
             p.velocity * deltaTime;
     }
 
-    // Remove faded particles
+
     particles.erase(
         std::remove_if(
             particles.begin(),
@@ -318,7 +318,7 @@ void Fireworks::draw(
         GL_PROGRAM_POINT_SIZE
     );
 
-    // Additive glow
+
     glEnable(GL_BLEND);
 
     glBlendFunc(
@@ -326,7 +326,7 @@ void Fireworks::draw(
         GL_ONE
     );
 
-    // Do not write particle depth
+
     glDepthMask(GL_FALSE);
 
     glBindVertexArray(VAO);
@@ -341,7 +341,7 @@ void Fireworks::draw(
 
     glBindVertexArray(0);
 
-    // Restore default rendering state
+
     glDepthMask(GL_TRUE);
 
     glBlendFunc(

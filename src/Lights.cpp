@@ -13,7 +13,7 @@ void Lights::apply(
 ) {
     shader.use();
 
-    // Camera position for Blinn-Phong specular highlights
+
     shader.setVec3("uViewPos", cameraPosition);
     shader.setFloat("uShininess", 32.0f);
 
@@ -25,13 +25,13 @@ void Lights::apply(
     float light2Intensity;
 
     if (sceneIndex == 0) {
-        // SCENE 1: Winter City
 
-        // Static warm light near the avenue
+
+
         light1Pos = glm::vec3(-12.0f, 12.0f, 10.0f);
         light1Intensity = 2.5f;
 
-        // Moving cool blue light near the buildings
+
         light2Pos = glm::vec3(
             12.0f + std::cos(time * 0.6f) * 10.0f,
             13.0f,
@@ -41,13 +41,13 @@ void Lights::apply(
 
     }
     else if (sceneIndex == 1) {
-        // SCENE 2: EXPO
 
-        // Warm light near the Christmas tree
+
+
         light1Pos = glm::vec3(-15.0f, 14.0f, -2.0f);
         light1Intensity = 3.0f;
 
-        // Moving blue light around Nur Alem
+
         light2Pos = glm::vec3(
             6.0f + std::cos(time * 0.5f) * 18.0f,
             35.0f,
@@ -63,13 +63,13 @@ void Lights::apply(
     }
 
     else {
-        // SCENE 3: Ishim Riverfront
 
-        // Static warm light near the promenade
+
+
         light1Pos = glm::vec3(0.0f, 14.0f, 12.0f);
         light1Intensity = 3.0f;
 
-        // Moving blue light above the frozen river
+
         light2Pos = glm::vec3(
             std::cos(time * 0.4f) * 35.0f,
             18.0f,
@@ -78,13 +78,13 @@ void Lights::apply(
         light2Intensity = 3.5f;
     }
 
-    // When lighting is disabled, both point lights are off
+
     if (!enabled) {
         light1Intensity = 0.0f;
         light2Intensity = 0.0f;
     }
 
-    // LIGHT 1: Warm yellow
+
     shader.setVec3(
         "uLights[0].position",
         light1Pos
@@ -98,7 +98,7 @@ void Lights::apply(
         light1Intensity
     );
 
-    // LIGHT 2: Cool blue
+
     shader.setVec3(
         "uLights[1].position",
         light2Pos
