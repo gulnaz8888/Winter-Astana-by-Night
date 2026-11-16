@@ -36,6 +36,7 @@ ExpoScene::ExpoScene()
       sphere(Primitives::sphere()),
       bigSphere(Primitives::sphere(48, 64)),
       torus(Primitives::torus()) {
+    podiumGlass=std::make_unique<Texture>("assets/textures/blue_glass.png");
     buildGround();
     buildPodium();
     buildNurAlem();
@@ -85,17 +86,40 @@ void ExpoScene::buildGround() {
 }
 
 void ExpoScene::buildPodium() {
-    const glm::vec3 wall(0.30f, 0.31f, 0.36f);
-    const glm::vec3 dark(0.05f, 0.05f, 0.07f);
-    add(root, cube, {6.f, 0.f, -42.f}, {120.f, 10.f, 30.f}, wall);
-    add(root, cube, {6.f, 10.f, -41.f}, {126.f, 0.8f, 34.f}, {0.26f, 0.27f, 0.32f});
-    add(root, cube, {6.f, 1.5f, -26.9f}, {100.f, 5.5f, 0.3f}, {0.10f, 0.08f, 0.06f}, {0.75f, 0.45f, 0.12f});
-    for (float x = -42.f; x <= 54.f; x += 6.f) {
-        add(root, cube, {x, 1.5f, -26.7f}, {0.35f, 5.5f, 0.3f}, dark);
+    const glm::vec3 body(0.055f,0.09f,0.15f);
+    const glm::vec3 frame(0.20f,0.27f,0.35f);
+    add(root,cube,{6,0,-42},{120,10,28},body,{0.012f,0.025f,0.045f});
+    add(root,cube,{6,10,-41},{126,0.55f,34},{0.50f,0.56f,0.64f},{0.065f,0.08f,0.10f});
+    add(root,cube,{6,0.45f,-26.8f},{119,0.38f,1.1f},{0.23f,0.28f,0.36f},{0.025f,0.04f,0.065f});
+    for(int column=0;column<30;++column) {
+        float x=-51.5f+column*3.95f;
+        for(int row=0;row<3;++row) {
+            float y=1.15f+row*2.55f,z=-26.62f-(y-1.15f)*0.12f;
+            float variation=0.88f+0.04f*((column+row*3)%4);
+            Node* pane=add(root,cube,{x,y,z},{3.76f,2.38f,0.10f},
+                           glm::vec3(0.25f,0.40f,0.61f)*variation,{0.018f,0.045f,0.085f});
+            pane->texture=podiumGlass.get();
+            pane->uvScale={1.f,1.f,1.f};
+            pane->rotation.x=-0.12f;
+
+        }
     }
-    add(root, cube, {-51.f, 1.5f, -26.8f}, {14.f, 5.5f, 0.3f}, {0.2f, 0.25f, 0.05f}, {0.4f, 0.55f, 0.12f});
-    for (float x = 40.f; x <= 66.f; x += 1.6f) {
-        add(root, sphere, {x, 10.9f, -24.5f}, glm::vec3(0.5f), warmLight, warmLight);
+    for(int i=0;i<=30;++i) {
+        float x=-53.48f+i*3.95f;
+        Node* mullion=add(root,cube,{x,1.05f,-26.44f},{0.09f,7.8f,0.13f},frame,{0.025f,0.04f,0.06f});
+        mullion->rotation.x=-0.12f;
+    }
+    for(int row=0;row<=3;++row) {
+        float y=1.05f+row*2.55f;
+        add(root,cube,{6,y,-26.42f-(y-1.05f)*0.12f},{119,0.085f,0.16f},frame,{0.025f,0.04f,0.06f});
+    }
+    add(root,cube,{6,8.9f,-27.35f},{119,0.07f,0.12f},{0.40f,0.58f,0.75f},{0.12f,0.21f,0.31f});
+    for(float x:{-6.f,6.f,18.f}) {
+        add(root,cube,{x,0.8f,-26.34f},{2.5f,4.6f,0.12f},{0.035f,0.075f,0.12f},{0.008f,0.02f,0.035f});
+        add(root,cube,{x,0.8f,-26.23f},{0.065f,4.6f,0.07f},frame,{0.04f,0.055f,0.075f});
+    }
+    for(float x=40.f;x<=66.f;x+=1.6f) {
+        add(root,sphere,{x,10.65f,-24.5f},glm::vec3(0.25f),{0.70f,0.82f,0.96f},{0.28f,0.40f,0.56f});
     }
 }
 

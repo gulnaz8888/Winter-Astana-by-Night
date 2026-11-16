@@ -29,6 +29,7 @@ private:
     Mesh sphere;
     Mesh bigSphere;
     Mesh torus;
+    std::unique_ptr<Texture> podiumGlass;
     Node root;
     Node* starPivot = nullptr;
     std::vector<Node*> spinners;
