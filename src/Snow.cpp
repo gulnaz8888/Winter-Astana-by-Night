@@ -37,11 +37,17 @@ Snow::Snow(int particleCount) {
     );
 
     glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 Snow::~Snow() {
-    glDeleteBuffers(1, &VBO);
-    glDeleteVertexArrays(1, &VAO);
+    if (VBO) {
+        glDeleteBuffers(1, &VBO);
+    }
+
+    if (VAO) {
+        glDeleteVertexArrays(1, &VAO);
+    }
 }
 
 float Snow::randomFloat(
@@ -54,6 +60,12 @@ float Snow::randomFloat(
 
     return minValue +
         normalized * (maxValue - minValue);
+}
+
+void Snow::setWind(float x, float z) {
+    windVelocity.x = x;
+    windVelocity.y = 0.f;
+    windVelocity.z = z;
 }
 
 void Snow::resetParticle(
@@ -84,14 +96,40 @@ void Snow::resetParticle(
 }
 
 void Snow::update(float deltaTime) {
+    // Movement remains independent of frame rate.
+    // Clamp large time jumps when switching windows.
+    deltaTime = std::clamp(
+        deltaTime, 0.f, 0.05f
+    );
+
     for (auto& particle : particles) {
+        // Snow falls downward.
         particle.position.y -=
             particle.speed * deltaTime;
 
+        // Wind moves snow horizontally.
         particle.position.x +=
-            0.5f * deltaTime;
+            windVelocity.x * deltaTime;
 
-        if (particle.position.y < 0.0f) {
+        particle.position.z +=
+            windVelocity.z * deltaTime;
+
+        // Wrap particles across the snowy area.
+        // This prevents strong wind from emptying the scene.
+        if (particle.position.x > 40.f) {
+            particle.position.x -= 80.f;
+        } else if (particle.position.x < -40.f) {
+            particle.position.x += 80.f;
+        }
+
+        if (particle.position.z > 20.f) {
+            particle.position.z -= 50.f;
+        } else if (particle.position.z < -30.f) {
+            particle.position.z += 50.f;
+        }
+
+        // Recycle particles reaching the ground.
+        if (particle.position.y < 0.f) {
             resetParticle(particle, false);
         }
     }
@@ -103,7 +141,6 @@ void Snow::draw(
     const glm::mat4& projection,
     int visibleCount
 ) {
-    // -1 means draw all snowflakes.
     int total = static_cast<int>(
         particles.size()
     );
@@ -121,15 +158,11 @@ void Snow::draw(
         return;
     }
 
-    // Update only the particles we will draw.
     for (int i = 0; i < count; ++i) {
         positions[i] = particles[i].position;
     }
 
-    glBindBuffer(
-        GL_ARRAY_BUFFER,
-        VBO
-    );
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
     glBufferSubData(
         GL_ARRAY_BUFFER,
@@ -140,21 +173,10 @@ void Snow::draw(
     );
 
     shader.use();
+    shader.setMat4("uView", view);
+    shader.setMat4("uProj", projection);
 
-    shader.setMat4(
-        "uView",
-        view
-    );
-
-    shader.setMat4(
-        "uProj",
-        projection
-    );
-
-    glEnable(
-        GL_PROGRAM_POINT_SIZE
-    );
-
+    glEnable(GL_PROGRAM_POINT_SIZE);
     glEnable(GL_BLEND);
 
     glBlendFunc(
