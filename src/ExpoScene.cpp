@@ -97,11 +97,15 @@ void ExpoScene::buildPodium() {
             float y=1.15f+row*2.55f,z=-26.62f-(y-1.15f)*0.12f;
             float variation=0.88f+0.04f*((column+row*3)%4);
             Node* pane=add(root,cube,{x,y,z},{3.76f,2.38f,0.10f},
-                           glm::vec3(0.25f,0.40f,0.61f)*variation,{0.018f,0.045f,0.085f});
+                           glm::vec3(0.25f,0.40f,0.61f)*variation,{0.055f,0.050f,0.042f});
             pane->texture=podiumGlass.get();
             pane->uvScale={1.f,1.f,1.f};
             pane->rotation.x=-0.12f;
-
+            if((column+row)%3!=1) {
+                float lightY=y+1.75f;
+                add(root,cube,{x,lightY,-26.44f-(lightY-1.15f)*0.12f},{2.65f,0.045f,0.035f},
+                    {0.88f,0.78f,0.60f},{0.30f,0.20f,0.10f});
+            }
         }
     }
     for(int i=0;i<=30;++i) {
@@ -117,6 +121,7 @@ void ExpoScene::buildPodium() {
     for(float x:{-6.f,6.f,18.f}) {
         add(root,cube,{x,0.8f,-26.34f},{2.5f,4.6f,0.12f},{0.035f,0.075f,0.12f},{0.008f,0.02f,0.035f});
         add(root,cube,{x,0.8f,-26.23f},{0.065f,4.6f,0.07f},frame,{0.04f,0.055f,0.075f});
+        add(root,cube,{x,5.48f,-26.14f},{2.7f,0.07f,0.08f},{0.90f,0.80f,0.63f},{0.44f,0.30f,0.15f});
     }
     for(float x=40.f;x<=66.f;x+=1.6f) {
         add(root,sphere,{x,10.65f,-24.5f},glm::vec3(0.25f),{0.70f,0.82f,0.96f},{0.28f,0.40f,0.56f});

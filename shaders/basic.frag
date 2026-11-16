@@ -397,6 +397,9 @@ void main() {
 
         if (uSceneIndex == 1) {
 
+            vec3 entranceLight=vec3(clamp(vWorldPos.x,-51.0,65.0),3.8,-25.8);
+            result+=calculateLight(entranceLight,vec3(1.0,0.79,0.54),1.10,baseColor,N,V,0.06,0.018);
+
             float redPulse =
                 0.70 + 0.30 * sin(uTime * 1.6);
 
@@ -804,6 +807,12 @@ void main() {
     if (snowCoverage > 0.0) {
 
         vec3 matteSnow = calculateMatteSnow(fog);
+        if(uSceneIndex==1 && uLightingEnabled){
+            vec2 closest=vec2(clamp(vWorldPos.x,-51.0,65.0),-25.8);
+            float warmth=exp(-distance(vWorldPos.xz,closest)*0.22);
+            matteSnow+=vec3(0.12,0.072,0.026)*warmth;
+        }
+
 
         float opacity = clamp(
             snowCoverage * 0.98,
