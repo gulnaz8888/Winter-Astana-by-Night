@@ -586,7 +586,7 @@ void Scene::buildLamps() {
 
 
 void Scene::buildSkyline() {
-    SceneGeometry gold, frames, glass, light, snow, buildings;
+    SceneGeometry gold, frames, glass, light, snow;
 
     for (float side : {-1.f, 1.f}) {
         float x = side * 18.5f;
@@ -649,78 +649,7 @@ void Scene::buildSkyline() {
         );
     }
 
-    for (float side : {-1.f, 1.f}) {
-        for (int i = 0; i < 1; ++i) {
-            float x = side * (42.f + i * 12.f);
-            float z = 3.f - i * 26.f;
-
-            float w = 20.f + i * 2.f;
-            float h = 11.f + (i % 3) * 3.2f;
-            float d = 16.f;
-
-            buildings.box(
-                {x, 0, z},
-                {w, h, d}
-            );
-
-            buildings.box(
-                {x, h, z},
-                {w + 0.6f, 0.45f, d + 0.6f}
-            );
-
-            snow.box(
-                {x, h + 0.45f, z},
-                {w + 0.9f, 0.25f, d + 0.9f}
-            );
-
-            for (
-                float y = 2.5f;
-                y < h - 1.f;
-                y += 2.9f
-            ) {
-                for (int k = 0; k < 7; ++k) {
-                    float xx =
-                        x - w * 0.42f + k * w * 0.14f;
-
-                    if (
-                        (i + k + static_cast<int>(y)) % 4 == 0
-                    ) {
-                        continue;
-                    }
-
-                    light.box(
-                        {xx, y, z + d * 0.5f + 0.06f},
-                        {1.1f, 1.6f, 0.08f}
-                    );
-                }
-
-                for (int k = 0; k < 5; ++k) {
-                    float zz =
-                        z - d * 0.4f + k * d * 0.2f;
-
-                    light.box(
-                        {
-                            x - side * (w * 0.5f + 0.06f),
-                            y,
-                            zz
-                        },
-                        {0.08f, 1.6f, 1.f}
-                    );
-                }
-            }
-
-            for (float offset : {-0.45f, 0.f, 0.45f}) {
-                frames.box(
-                    {
-                        x + w * offset,
-                        0,
-                        z + d * 0.5f + 0.12f
-                    },
-                    {0.22f, h, 0.25f}
-                );
-            }
-        }
-    }
+    buildResidentialBlocks();
 
     attach(
         root, gold,
@@ -751,12 +680,7 @@ void Scene::buildSkyline() {
 
     attach(root, snow, snowColor, snowGlow);
 
-    attach(
-        root, buildings,
-        {0.75f, 0.80f, 0.87f},
-        {0.07f, 0.09f, 0.12f},
-        brickTexture.get()
-    );
+
 }
 
 
