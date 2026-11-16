@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include <glad/glad.h>
@@ -20,7 +21,8 @@ public:
     void draw(
         const Shader& shader,
         const glm::mat4& view,
-        const glm::mat4& projection
+        const glm::mat4& projection,
+        int visibleCount = -1
     );
 
 private:
@@ -35,7 +37,10 @@ private:
     GLuint VAO = 0;
     GLuint VBO = 0;
 
-    float randomFloat(float minValue, float maxValue);
+    float randomFloat(
+        float minValue,
+        float maxValue
+    );
 
     void resetParticle(
         Particle& particle,
