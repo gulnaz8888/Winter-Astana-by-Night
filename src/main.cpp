@@ -18,11 +18,7 @@
 #include "Snow.h"
 #include "Fireworks.h"
 
-static void onResize(
-    GLFWwindow*,
-    int width,
-    int height
-) {
+static void onResize(GLFWwindow*, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
@@ -41,8 +37,7 @@ int main() {
 #endif
 
     GLFWwindow* window = glfwCreateWindow(
-        1280, 720,
-        "Winter Astana by Night",
+        1280, 720, "Winter Astana by Night",
         nullptr, nullptr
     );
 
@@ -110,8 +105,11 @@ int main() {
         bool fireworksEnabled = true;
         bool fWasPressed = false;
 
-        // Wind settings.
-        // 1 means wind to the right, -1 means left.
+        // NEW: Automatic snow toggle
+        bool autoSnowEnabled = true;
+        bool nWasPressed = false;
+
+        // Wind settings
         float windDirection = 1.f;
         float windStrength = 0.5f;
 
@@ -122,14 +120,11 @@ int main() {
         bool rWasPressed = false;
 
         snow.setWind(
-            windDirection * windStrength,
-            0.f
+            windDirection * windStrength, 0.f
         );
 
         const int snowCounts[3] = {
-            4000,  // Winter City
-            4000,  // EXPO
-            1000   // Riverfront
+            4000, 4000, 1000
         };
 
         const glm::vec3 fogColors[3] = {
@@ -139,9 +134,7 @@ int main() {
         };
 
         const float fogDensities[3] = {
-            0.0023f,
-            0.0025f,
-            0.0018f
+            0.0023f, 0.0025f, 0.0018f
         };
 
         const glm::vec3 skyHorizon[3] = {
@@ -206,16 +199,15 @@ int main() {
                 lastTitleTime = now;
             }
 
-            if (
-                glfwGetKey(window, GLFW_KEY_ESCAPE)
-                == GLFW_PRESS
-            ) {
+            if (glfwGetKey(
+                window, GLFW_KEY_ESCAPE
+            ) == GLFW_PRESS) {
                 glfwSetWindowShouldClose(
                     window, GLFW_TRUE
                 );
             }
 
-            // Point lighting toggle: L.
+            // Lighting toggle: L
             bool lPressed =
                 glfwGetKey(window, GLFW_KEY_L)
                 == GLFW_PRESS;
@@ -223,15 +215,14 @@ int main() {
             if (lPressed && !lWasPressed) {
                 lightingEnabled = !lightingEnabled;
 
-                std::cout
-                    << "Point lighting: "
-                    << (lightingEnabled ? "ON" : "OFF")
-                    << std::endl;
+                std::cout << "Point lighting: "
+                          << (lightingEnabled ? "ON" : "OFF")
+                          << std::endl;
             }
 
             lWasPressed = lPressed;
 
-            // Fireworks toggle: F.
+            // Fireworks toggle: F
             bool fPressed =
                 glfwGetKey(window, GLFW_KEY_F)
                 == GLFW_PRESS;
@@ -239,16 +230,29 @@ int main() {
             if (fPressed && !fWasPressed) {
                 fireworksEnabled = !fireworksEnabled;
 
-                std::cout
-                    << "Fireworks: "
-                    << (fireworksEnabled ? "ON" : "OFF")
-                    << std::endl;
+                std::cout << "Fireworks: "
+                          << (fireworksEnabled ? "ON" : "OFF")
+                          << std::endl;
             }
 
             fWasPressed = fPressed;
 
-            // WIND CONTROLS
+            // NEW: Automatic snow toggle: N
+            bool nPressed =
+                glfwGetKey(window, GLFW_KEY_N)
+                == GLFW_PRESS;
 
+            if (nPressed && !nWasPressed) {
+                autoSnowEnabled = !autoSnowEnabled;
+
+                std::cout << "Automatic snow: "
+                          << (autoSnowEnabled ? "ON" : "OFF")
+                          << std::endl;
+            }
+
+            nWasPressed = nPressed;
+
+            // Wind controls
             bool leftPressed =
                 glfwGetKey(window, GLFW_KEY_LEFT)
                 == GLFW_PRESS;
@@ -271,7 +275,6 @@ int main() {
 
             bool windChanged = false;
 
-            // Change wind direction.
             if (leftPressed && !leftWasPressed) {
                 windDirection = -1.f;
                 windStrength = std::max(
@@ -288,25 +291,20 @@ int main() {
                 windChanged = true;
             }
 
-            // Increase wind strength.
             if (upPressed && !upWasPressed) {
                 windStrength = std::min(
-                    windStrength + 2.f,
-                    18.f
+                    windStrength + 2.f, 18.f
                 );
                 windChanged = true;
             }
 
-            // Decrease wind strength.
             if (downPressed && !downWasPressed) {
                 windStrength = std::max(
-                    windStrength - 2.f,
-                    0.f
+                    windStrength - 2.f, 0.f
                 );
                 windChanged = true;
             }
 
-            // Reset to original gentle drift.
             if (rPressed && !rWasPressed) {
                 windDirection = 1.f;
                 windStrength = 0.5f;
@@ -332,38 +330,33 @@ int main() {
             }
 
             int width, height;
-
             glfwGetFramebufferSize(
                 window, &width, &height
             );
 
-            if (height == 0 || width == 0) {
+            if (width == 0 || height == 0) {
                 glfwPollEvents();
                 continue;
             }
 
-            // SCENE SWITCHING
-
+            // Switch scenes
             int requested = activeScene;
 
-            if (
-                glfwGetKey(window, GLFW_KEY_1)
-                == GLFW_PRESS
-            ) {
+            if (glfwGetKey(
+                window, GLFW_KEY_1
+            ) == GLFW_PRESS) {
                 requested = 0;
             }
 
-            if (
-                glfwGetKey(window, GLFW_KEY_2)
-                == GLFW_PRESS
-            ) {
+            if (glfwGetKey(
+                window, GLFW_KEY_2
+            ) == GLFW_PRESS) {
                 requested = 1;
             }
 
-            if (
-                glfwGetKey(window, GLFW_KEY_3)
-                == GLFW_PRESS
-            ) {
+            if (glfwGetKey(
+                window, GLFW_KEY_3
+            ) == GLFW_PRESS) {
                 requested = 2;
             }
 
@@ -395,51 +388,40 @@ int main() {
                 GL_DEPTH_BUFFER_BIT
             );
 
-            // SKY
-
+            // Sky
             glDisable(GL_DEPTH_TEST);
 
             skyShader.use();
-
             skyShader.setVec3(
-                "uHorizon",
-                skyHorizon[activeScene]
+                "uHorizon", skyHorizon[activeScene]
             );
-
             skyShader.setVec3(
-                "uTop",
-                skyTop[activeScene]
+                "uTop", skyTop[activeScene]
             );
-
             skyShader.setFloat(
-                "uStars",
-                skyStars[activeScene]
+                "uStars", skyStars[activeScene]
             );
 
             sky.draw(skyShader);
 
             glEnable(GL_DEPTH_TEST);
 
-            // LIGHTING AND SCENE SHADER
-
+            // Main shader
             shader.use();
 
             shader.setMat4("uView", view);
             shader.setMat4("uProj", projection);
 
             shader.setVec3(
-                "uCamPos",
-                camera.position
+                "uCamPos", camera.position
             );
 
             shader.setVec3(
-                "uFogColor",
-                fogColors[activeScene]
+                "uFogColor", fogColors[activeScene]
             );
 
             shader.setFloat(
-                "uFogDensity",
-                fogDensities[activeScene]
+                "uFogDensity", fogDensities[activeScene]
             );
 
             Lights::apply(
@@ -456,14 +438,18 @@ int main() {
             );
 
             shader.setInt(
-                "uSceneIndex",
-                activeScene
+                "uSceneIndex", activeScene
             );
 
             shader.setFloat("uTime", time);
 
-            // DRAW SELECTED SCENE
+            // NEW: Send snow switch to fragment shader.
+            shader.setInt(
+                "uAutoSnowEnabled",
+                autoSnowEnabled ? 1 : 0
+            );
 
+            // Draw active scene
             if (activeScene == 0) {
                 scene.update(time);
                 scene.draw(shader);
@@ -476,8 +462,7 @@ int main() {
                 riverfrontScene.draw(shader);
             }
 
-            // SNOW PARTICLES
-
+            // Existing snow particles
             snow.update(deltaTime);
 
             snow.draw(
@@ -487,8 +472,7 @@ int main() {
                 snowCounts[activeScene]
             );
 
-            // FIREWORKS ONLY IN RIVERFRONT
-
+            // Fireworks only in Riverfront
             if (
                 activeScene == 2 &&
                 fireworksEnabled
