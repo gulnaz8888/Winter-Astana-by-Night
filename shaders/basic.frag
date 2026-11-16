@@ -28,14 +28,17 @@ uniform sampler2D uTexture;
 uniform bool uUseTexture;
 uniform vec3 uUVScale;
 
-// Lighting controls
 uniform bool uLightingEnabled;
 uniform int uSceneIndex;
 uniform float uTime;
 uniform bool uIsBaiterek;
 uniform bool uIsArchitecturalLED;
+uniform bool uAutoSnowEnabled;
 
-// Blinn-Phong point light calculation
+// =============================================
+// LIGHTING
+// =============================================
+
 vec3 calculateLight(
     vec3 lightPos,
     vec3 lightColor,
@@ -47,13 +50,14 @@ vec3 calculateLight(
     float quadraticTerm
 ) {
     vec3 lightVector = lightPos - vWorldPos;
-    float distance = length(lightVector);
+    float distanceToLight = length(lightVector);
     vec3 L = normalize(lightVector);
 
     float diffuseFactor = max(dot(N, L), 0.0);
     vec3 diffuse = diffuseFactor * baseColor;
 
     vec3 H = normalize(L + V);
+
     float specularFactor = pow(
         max(dot(N, H), 0.0),
         max(uShininess, 1.0)
@@ -61,9 +65,11 @@ vec3 calculateLight(
 
     vec3 specular = vec3(0.20) * specularFactor;
 
-    float attenuation = 1.0 /
-        (1.0 + linearTerm * distance
-             + quadraticTerm * distance * distance);
+    float attenuation = 1.0 / (
+        1.0
+        + linearTerm * distanceToLight
+        + quadraticTerm * distanceToLight * distanceToLight
+    );
 
     return (diffuse + specular)
         * lightColor
@@ -71,9 +77,275 @@ vec3 calculateLight(
         * attenuation;
 }
 
+// =============================================
+// PROCEDURAL SNOW
+// =============================================
+
+float snowNoise(vec3 p) {
+    float a = sin(p.x * 0.43 + p.z * 0.37);
+    float b = sin(p.z * 0.89 - p.x * 0.21);
+    float c = sin(p.x * 1.63 + p.z * 1.27);
+
+    return a * 0.5 + b * 0.3 + c * 0.2;
+}
+
+float calculateSnowCoverage(vec3 N) {
+
+    if (!uAutoSnowEnabled) {
+        return 0.0;
+    }
+
+    // Protect Baiterek and architectural LEDs.
+    if (uIsBaiterek || uIsArchitecturalLED) {
+        return 0.0;
+    }
+
+    float emissionStrength = max(
+        max(uEmissive.r, uEmissive.g),
+        uEmissive.b
+    );
+
+    float emissionMask = 1.0 - smoothstep(
+        0.18,
+        0.48,
+        emissionStrength
+    );
+
+    float noiseValue = snowNoise(vWorldPos);
+
+    float facingUp = clamp(N.y, 0.0, 1.0);
+
+    float slopeCoverage = smoothstep(
+        0.38,
+        0.82,
+        facingUp + noiseValue * 0.075
+    );
+
+    // =========================================
+    // SCENE 1: WINTER CITY
+    // =========================================
+
+    if (uSceneIndex == 0) {
+
+        float heightCoverage = smoothstep(
+            1.5,
+            4.0,
+            vWorldPos.y
+        );
+
+        return clamp(
+            slopeCoverage *
+            heightCoverage *
+            emissionMask,
+            0.0,
+            1.0
+        );
+    }
+
+    // =========================================
+    // SCENE 2: EXPO
+    // =========================================
+
+    if (uSceneIndex == 1) {
+
+        // Christmas tree in EXPO is located
+        // around (-15, 0, -2).
+        //
+        // Exclude its area from automatic snow
+        // so the tree preserves its green material
+        // and colored lighting.
+
+        float distanceToTree = length(
+            vWorldPos.xz - vec2(-15.0, -2.0)
+        );
+
+        float treeProtection = 1.0 - smoothstep(
+            8.0,
+            11.0,
+            distanceToTree
+        );
+
+        if (
+            treeProtection > 0.99 &&
+            vWorldPos.y < 30.0
+        ) {
+            return 0.0;
+        }
+
+        // -------------------------------------
+        // Nur Alem sphere
+        // -------------------------------------
+
+        vec3 sphereCenter = vec3(
+            6.0,
+            38.0,
+            -42.0
+        );
+
+        float distanceFromCenter = length(
+            vWorldPos - sphereCenter
+        );
+
+        float shellMask = 1.0 - smoothstep(
+            0.8,
+            2.0,
+            abs(distanceFromCenter - 30.0)
+        );
+
+        // Only the dark sphere shell.
+        // Bright decorative facets are protected.
+        float darkShellMask = 1.0 - smoothstep(
+            0.12,
+            0.28,
+            max(
+                max(uColor.r, uColor.g),
+                uColor.b
+            )
+        );
+
+        // Snow cap on the upper hemisphere.
+        float capHeight =
+            51.0 + noiseValue * 1.6;
+
+        float topHeightMask = smoothstep(
+            capHeight - 2.0,
+            capHeight + 4.0,
+            vWorldPos.y
+        );
+
+        float sphereSnow =
+            shellMask *
+            darkShellMask *
+            topHeightMask *
+            slopeCoverage;
+
+        // -------------------------------------
+        // Dark EXPO podium / building roof
+        // -------------------------------------
+
+        // Podium centered around (6, -42).
+        // Protect vertical walls and keep snow
+        // on upward-facing roof surfaces.
+
+        float insideX =
+            1.0 - smoothstep(
+                58.0,
+                64.0,
+                abs(vWorldPos.x - 6.0)
+            );
+
+        float insideZ =
+            1.0 - smoothstep(
+                13.0,
+                19.0,
+                abs(vWorldPos.z + 42.0)
+            );
+
+        float podiumArea = insideX * insideZ;
+
+        // Main roof lies around y = 10.
+        float podiumHeight =
+            smoothstep(
+                8.8,
+                10.0,
+                vWorldPos.y
+            ) *
+            (
+                1.0 - smoothstep(
+                    12.0,
+                    15.0,
+                    vWorldPos.y
+                )
+            );
+
+        // Strong coverage on flat roof sections.
+        float podiumSnow =
+            podiumArea *
+            podiumHeight *
+            smoothstep(
+                0.55,
+                0.90,
+                facingUp
+            );
+
+        // Prevent snow from appearing on the tree.
+        podiumSnow *= 1.0 - treeProtection;
+
+        // Use a denser layer on the dark podium.
+        podiumSnow = clamp(
+            podiumSnow * 1.25,
+            0.0,
+            1.0
+        );
+
+        float coverage = max(
+            sphereSnow,
+            podiumSnow
+        );
+
+        return clamp(
+            coverage * emissionMask,
+            0.0,
+            1.0
+        );
+    }
+
+    // =========================================
+    // SCENE 3: RIVERFRONT
+    // =========================================
+
+    if (uSceneIndex == 2) {
+
+        float heightCoverage = smoothstep(
+            2.5,
+            5.0,
+            vWorldPos.y
+        );
+
+        return clamp(
+            slopeCoverage *
+            heightCoverage *
+            emissionMask,
+            0.0,
+            1.0
+        );
+    }
+
+    return 0.0;
+}
+
+// =============================================
+// MATTE WHITE SNOW
+// =============================================
+
+vec3 calculateMatteSnow(float fog) {
+
+    vec3 snowColor = vec3(
+        0.96,
+        0.98,
+        1.0
+    );
+
+    float variation = snowNoise(
+        vWorldPos * 1.3
+    );
+
+    snowColor *= 0.97 + 0.03 * variation;
+
+    // Reduce fog influence on the snow.
+    return mix(
+        snowColor,
+        uFogColor,
+        fog * 0.32
+    );
+}
+
+// =============================================
+// MAIN
+// =============================================
+
 void main() {
 
-    // Hide architectural LED lighting when L is OFF
     if (uIsArchitecturalLED && !uLightingEnabled) {
         discard;
     }
@@ -81,8 +353,13 @@ void main() {
     vec3 baseColor = uColor;
 
     if (uUseTexture) {
+
         vec2 uv = vTexCoord * uUVScale.xy;
-        baseColor *= texture(uTexture, uv).rgb;
+
+        baseColor *= texture(
+            uTexture,
+            uv
+        ).rgb;
     }
 
     vec3 N = normalize(vNormal);
@@ -93,15 +370,15 @@ void main() {
 
     vec3 result = ambientStrength * baseColor;
 
-    // Keep the original Northern Lights facade texture visible
     if (uSceneIndex == 2 && uUseTexture) {
         result += baseColor * 0.20;
     }
 
     if (uLightingEnabled) {
 
-        // Two main Blinn-Phong point lights
+        // Main point lights
         for (int i = 0; i < 2; ++i) {
+
             result += calculateLight(
                 uLights[i].position,
                 uLights[i].color,
@@ -114,212 +391,299 @@ void main() {
             );
         }
 
-        // SCENE 2: EXPO - stronger colored tree lighting
-if (uSceneIndex == 1) {
+        // =====================================
+        // EXPO LIGHTING
+        // =====================================
 
-    // Decorative colored light near the Christmas tree
-    float redPulse   = 0.70 + 0.30 * sin(uTime * 1.6);
-    float greenPulse = 0.70 + 0.30 * sin(uTime * 1.6 + 2.1);
-    float bluePulse  = 0.70 + 0.30 * sin(uTime * 1.6 + 4.2);
+        if (uSceneIndex == 1) {
 
-    vec3 treeColor = vec3(
-        0.95 * redPulse,
-        0.95 * greenPulse,
-        0.95 * bluePulse
-    );
+            float redPulse =
+                0.70 + 0.30 * sin(uTime * 1.6);
 
-    // Extra local light coming from the tree itself
-    vec3 treeLightPos = vec3(-15.0, 12.0, 1.5);
+            float greenPulse =
+                0.70 + 0.30 * sin(uTime * 1.6 + 2.1);
 
-    result += calculateLight(
-        treeLightPos,
-        treeColor,
-        4.8,
-        baseColor,
-        N,
-        V,
-        0.05,
-        0.006
-    );
+            float bluePulse =
+                0.70 + 0.30 * sin(uTime * 1.6 + 4.2);
 
-    // Colored light pools on the snow/ground around the tree
-    vec2 redSpot   = vec2(-18.0,  1.0);
-    vec2 greenSpot = vec2(-12.0, -2.0);
-    vec2 blueSpot  = vec2(-15.0,  6.0);
+            vec3 treeColor = vec3(
+                0.95 * redPulse,
+                0.95 * greenPulse,
+                0.95 * bluePulse
+            );
 
-    float groundMask = smoothstep(0.45, 0.92, N.y);
+            vec3 treeLightPos = vec3(
+                -15.0,
+                12.0,
+                1.5
+            );
 
-    float redFalloff =
-        1.0 - smoothstep(
-            0.5, 18.0,
-            distance(vWorldPos.xz, redSpot)
-        );
+            result += calculateLight(
+                treeLightPos,
+                treeColor,
+                4.8,
+                baseColor,
+                N,
+                V,
+                0.05,
+                0.006
+            );
 
-    float greenFalloff =
-        1.0 - smoothstep(
-            0.5, 18.0,
-            distance(vWorldPos.xz, greenSpot)
-        );
+            vec2 redSpot = vec2(-18.0, 1.0);
+            vec2 greenSpot = vec2(-12.0, -2.0);
+            vec2 blueSpot = vec2(-15.0, 6.0);
 
-    float blueFalloff =
-        1.0 - smoothstep(
-            0.5, 18.0,
-            distance(vWorldPos.xz, blueSpot)
-        );
+            float groundMask = smoothstep(
+                0.45,
+                0.92,
+                N.y
+            );
 
-    vec3 coloredGroundLight =
-        vec3(1.00, 0.10, 0.12) * redPulse   * redFalloff +
-        vec3(0.10, 1.00, 0.18) * greenPulse * greenFalloff +
-        vec3(0.12, 0.30, 1.00) * bluePulse  * blueFalloff;
+            float redFalloff =
+                1.0 - smoothstep(
+                    0.5,
+                    18.0,
+                    distance(vWorldPos.xz, redSpot)
+                );
 
-    // stronger visible color on snow and ground
-    result += coloredGroundLight * groundMask * 2.35;
-}
+            float greenFalloff =
+                1.0 - smoothstep(
+                    0.5,
+                    18.0,
+                    distance(vWorldPos.xz, greenSpot)
+                );
 
-// SCENE 1: Winter City - decorative city lighting
-if (uSceneIndex == 0) {
+            float blueFalloff =
+                1.0 - smoothstep(
+                    0.5,
+                    18.0,
+                    distance(vWorldPos.xz, blueSpot)
+                );
 
-    // -------------------------------------------------
-    // 1) KHAN SHATYR - stronger purple / pink lighting
-    // -------------------------------------------------
-    vec3 khanLightPos = vec3(-68.0, 18.0, -104.0);
-    vec3 khanLightColor = vec3(0.95, 0.25, 0.88);
+            vec3 coloredGroundLight =
+                vec3(1.00, 0.10, 0.12)
+                    * redPulse * redFalloff
+                +
+                vec3(0.10, 1.00, 0.18)
+                    * greenPulse * greenFalloff
+                +
+                vec3(0.12, 0.30, 1.00)
+                    * bluePulse * blueFalloff;
 
-    result += calculateLight(
-        khanLightPos,
-        khanLightColor,
-        8.0,
-        baseColor,
-        N,
-        V,
-        0.02,
-        0.002
-    );
+            result +=
+                coloredGroundLight *
+                groundMask *
+                2.35;
+        }
 
-    float khanArea =
-        1.0 - smoothstep(
-            8.0, 40.0,
-            distance(vWorldPos.xz, vec2(-68.0, -104.0))
-        );
+        // =====================================
+        // WINTER CITY LIGHTING
+        // =====================================
 
-    float groundMaskKhan = smoothstep(0.35, 0.92, N.y);
+        if (uSceneIndex == 0) {
 
-    result += vec3(0.75, 0.20, 0.72)
-        * khanArea
-        * groundMaskKhan
-        * 1.4;
+            vec3 khanLightPos = vec3(
+                -68.0,
+                18.0,
+                -104.0
+            );
 
+            vec3 khanLightColor = vec3(
+                0.95,
+                0.25,
+                0.88
+            );
 
-    // -------------------------------------------------
-    // 2) TWO GOLDEN TOWERS behind Baiterek
-    // -------------------------------------------------
-    vec3 towerLeftPos  = vec3(-18.0, 22.0, -73.0);
-    vec3 towerRightPos = vec3( 18.0, 22.0, -73.0);
-    vec3 towerColor    = vec3(1.00, 0.58, 0.15);
+            result += calculateLight(
+                khanLightPos,
+                khanLightColor,
+                8.0,
+                baseColor,
+                N,
+                V,
+                0.02,
+                0.002
+            );
 
-    result += calculateLight(
-        towerLeftPos,
-        towerColor,
-        4.8,
-        baseColor,
-        N,
-        V,
-        0.03,
-        0.003
-    );
+            float khanArea =
+                1.0 - smoothstep(
+                    8.0,
+                    40.0,
+                    distance(
+                        vWorldPos.xz,
+                        vec2(-68.0, -104.0)
+                    )
+                );
 
-    result += calculateLight(
-        towerRightPos,
-        towerColor,
-        4.8,
-        baseColor,
-        N,
-        V,
-        0.03,
-        0.003
-    );
+            float groundMaskKhan = smoothstep(
+                0.35,
+                0.92,
+                N.y
+            );
 
-    float towerLeftArea =
-        1.0 - smoothstep(
-            6.0, 22.0,
-            distance(vWorldPos.xz, vec2(-18.0, -73.0))
-        );
+            result +=
+                vec3(0.75, 0.20, 0.72) *
+                khanArea *
+                groundMaskKhan *
+                1.4;
 
-    float towerRightArea =
-        1.0 - smoothstep(
-            6.0, 22.0,
-            distance(vWorldPos.xz, vec2(18.0, -73.0))
-        );
+            // Golden towers
+            vec3 towerLeftPos = vec3(
+                -18.0,
+                22.0,
+                -73.0
+            );
 
-    float groundMaskTower = smoothstep(0.35, 0.92, N.y);
+            vec3 towerRightPos = vec3(
+                18.0,
+                22.0,
+                -73.0
+            );
 
-    result += vec3(0.95, 0.55, 0.16)
-        * (towerLeftArea + towerRightArea)
-        * groundMaskTower
-        * 0.70;
+            vec3 towerColor = vec3(
+                1.00,
+                0.58,
+                0.15
+            );
 
+            result += calculateLight(
+                towerLeftPos,
+                towerColor,
+                4.8,
+                baseColor,
+                N,
+                V,
+                0.03,
+                0.003
+            );
 
-    // -------------------------------------------------
-    // 3) MOSQUE - warm white illumination
-    // -------------------------------------------------
-    vec3 mosqueMainPos = vec3(66.0, 10.0, -76.0);
-    vec3 mosqueLeftMinaretPos  = vec3(54.0, 18.0, -77.0);
-    vec3 mosqueRightMinaretPos = vec3(78.0, 18.0, -77.0);
+            result += calculateLight(
+                towerRightPos,
+                towerColor,
+                4.8,
+                baseColor,
+                N,
+                V,
+                0.03,
+                0.003
+            );
 
-    vec3 mosqueColor = vec3(1.00, 0.95, 0.86);
+            float towerLeftArea = 1.0 - smoothstep(
+                6.0,
+                22.0,
+                distance(
+                    vWorldPos.xz,
+                    vec2(-18.0, -73.0)
+                )
+            );
 
-    result += calculateLight(
-        mosqueMainPos,
-        mosqueColor,
-        2.0,
-        baseColor,
-        N,
-        V,
-        0.035,
-        0.0035
-    );
+            float towerRightArea = 1.0 - smoothstep(
+                6.0,
+                22.0,
+                distance(
+                    vWorldPos.xz,
+                    vec2(18.0, -73.0)
+                )
+            );
 
-    result += calculateLight(
-        mosqueLeftMinaretPos,
-        mosqueColor,
-        1.3,
-        baseColor,
-        N,
-        V,
-        0.04,
-        0.004
-    );
+            float groundMaskTower = smoothstep(
+                0.35,
+                0.92,
+                N.y
+            );
 
-    result += calculateLight(
-        mosqueRightMinaretPos,
-        mosqueColor,
-        1.3,
-        baseColor,
-        N,
-        V,
-        0.04,
-        0.004
-    );
+            result +=
+                vec3(0.95, 0.55, 0.16) *
+                (towerLeftArea + towerRightArea) *
+                groundMaskTower *
+                0.70;
 
-    float mosqueArea =
-        1.0 - smoothstep(
-            10.0, 32.0,
-            distance(vWorldPos.xz, vec2(66.0, -76.0))
-        );
+            // Mosque
+            vec3 mosqueMainPos = vec3(
+                66.0,
+                10.0,
+                -76.0
+            );
 
-    float groundMaskMosque = smoothstep(0.35, 0.92, N.y);
+            vec3 mosqueLeftMinaretPos = vec3(
+                54.0,
+                18.0,
+                -77.0
+            );
 
-    result += vec3(0.90, 0.86, 0.76)
-        * mosqueArea
-        * groundMaskMosque
-        * 0.22;
-}
+            vec3 mosqueRightMinaretPos = vec3(
+                78.0,
+                18.0,
+                -77.0
+            );
 
-        // SCENE 3: Riverfront - repeated streetlights
+            vec3 mosqueColor = vec3(
+                1.00,
+                0.95,
+                0.86
+            );
+
+            result += calculateLight(
+                mosqueMainPos,
+                mosqueColor,
+                2.0,
+                baseColor,
+                N,
+                V,
+                0.035,
+                0.0035
+            );
+
+            result += calculateLight(
+                mosqueLeftMinaretPos,
+                mosqueColor,
+                1.3,
+                baseColor,
+                N,
+                V,
+                0.04,
+                0.004
+            );
+
+            result += calculateLight(
+                mosqueRightMinaretPos,
+                mosqueColor,
+                1.3,
+                baseColor,
+                N,
+                V,
+                0.04,
+                0.004
+            );
+
+            float mosqueArea = 1.0 - smoothstep(
+                10.0,
+                32.0,
+                distance(
+                    vWorldPos.xz,
+                    vec2(66.0, -76.0)
+                )
+            );
+
+            float groundMaskMosque = smoothstep(
+                0.35,
+                0.92,
+                N.y
+            );
+
+            result +=
+                vec3(0.90, 0.86, 0.76) *
+                mosqueArea *
+                groundMaskMosque *
+                0.22;
+        }
+
+        // =====================================
+        // RIVERFRONT LIGHTING
+        // =====================================
 
         if (uSceneIndex == 2) {
 
-            // Find nearest lamp in each riverbank row
             float nearestX = clamp(
                 floor(vWorldPos.x / 22.0 + 0.5)
                     * 22.0,
@@ -327,16 +691,23 @@ if (uSceneIndex == 0) {
                 220.0
             );
 
+            vec3 nearBankLamp = vec3(
+                nearestX,
+                9.7,
+                18.0
+            );
 
+            vec3 farBankLamp = vec3(
+                nearestX,
+                9.2,
+                -112.0
+            );
 
-            vec3 nearBankLamp =
-                vec3(nearestX, 9.7, 18.0);
-
-            vec3 farBankLamp =
-                vec3(nearestX, 9.2, -112.0);
-
-            vec3 warmLampColor =
-                vec3(1.0, 0.72, 0.35);
+            vec3 warmLampColor = vec3(
+                1.0,
+                0.72,
+                0.35
+            );
 
             result += calculateLight(
                 nearBankLamp,
@@ -362,7 +733,10 @@ if (uSceneIndex == 0) {
         }
     }
 
-    // Fog
+    // =====================================
+    // FOG
+    // =====================================
+
     float dist = length(vWorldPos - uCamPos);
 
     float fog = clamp(
@@ -371,45 +745,78 @@ if (uSceneIndex == 0) {
         1.0
     );
 
-    vec3 color = mix(result, uFogColor, fog);
+    vec3 color = mix(
+        result,
+        uFogColor,
+        fog
+    );
 
-    // Normal emissive materials remain visible
+    // =====================================
+    // EMISSIVE MATERIALS
+    // =====================================
+
     vec3 emission = uEmissive;
 
-    // SCENE 1: Special golden Baiterek lighting
-if (uIsBaiterek) {
+    if (uIsBaiterek) {
 
-    if (uLightingEnabled) {
-        // Stronger at the bottom of the tower
-        float shaftGlow =
-            1.0 - smoothstep(
-                12.0, 43.0, vWorldPos.y
+        if (uLightingEnabled) {
+
+            float shaftGlow = 1.0 - smoothstep(
+                12.0,
+                43.0,
+                vWorldPos.y
             );
 
-        vec3 goldenIllumination =
-            vec3(1.0, 0.37, 0.035)
-            * 1.45 * shaftGlow;
+            vec3 goldenIllumination =
+                vec3(1.0, 0.37, 0.035)
+                * 1.45 * shaftGlow;
 
-        // Softer golden light near the sphere
-        goldenIllumination +=
-            vec3(0.65, 0.35, 0.08) * 0.35;
+            goldenIllumination +=
+                vec3(0.65, 0.35, 0.08)
+                * 0.35;
 
-        emission += goldenIllumination;
-    } else {
-        // Keep Baiterek faintly visible when lighting is OFF
-        float shaftGlow =
-            1.0 - smoothstep(
-                12.0, 43.0, vWorldPos.y
+            emission += goldenIllumination;
+
+        } else {
+
+            float shaftGlow = 1.0 - smoothstep(
+                12.0,
+                43.0,
+                vWorldPos.y
             );
 
-        vec3 softResidualGlow =
-            vec3(0.10, 0.06, 0.02) * (0.35 + 0.65 * shaftGlow);
+            vec3 softResidualGlow =
+                vec3(0.10, 0.06, 0.02)
+                * (0.35 + 0.65 * shaftGlow);
 
-        emission += softResidualGlow;
+            emission += softResidualGlow;
+        }
     }
-}
 
     color += emission * (1.0 - 0.5 * fog);
+
+    // =====================================
+    // FINAL MATTE SNOW LAYER
+    // =====================================
+
+    float snowCoverage = calculateSnowCoverage(N);
+
+    if (snowCoverage > 0.0) {
+
+        vec3 matteSnow = calculateMatteSnow(fog);
+
+        float opacity = clamp(
+            snowCoverage * 0.98,
+            0.0,
+            0.98
+        );
+
+        color = mix(
+            color,
+            matteSnow,
+            opacity
+        );
+    }
 
     FragColor = vec4(color, 1.0);
 }
