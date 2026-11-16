@@ -35,9 +35,9 @@ uniform bool uIsBaiterek;
 uniform bool uIsArchitecturalLED;
 uniform bool uAutoSnowEnabled;
 
-// =============================================
-// LIGHTING
-// =============================================
+
+
+
 
 vec3 calculateLight(
     vec3 lightPos,
@@ -77,9 +77,9 @@ vec3 calculateLight(
         * attenuation;
 }
 
-// =============================================
-// PROCEDURAL SNOW
-// =============================================
+
+
+
 
 float snowNoise(vec3 p) {
     float a = sin(p.x * 0.43 + p.z * 0.37);
@@ -95,7 +95,7 @@ float calculateSnowCoverage(vec3 N) {
         return 0.0;
     }
 
-    // Protect Baiterek and architectural LEDs.
+
     if (uIsBaiterek || uIsArchitecturalLED) {
         return 0.0;
     }
@@ -121,9 +121,9 @@ float calculateSnowCoverage(vec3 N) {
         facingUp + noiseValue * 0.075
     );
 
-    // =========================================
-    // SCENE 1: WINTER CITY
-    // =========================================
+
+
+
 
     if (uSceneIndex == 0) {
 
@@ -142,18 +142,18 @@ float calculateSnowCoverage(vec3 N) {
         );
     }
 
-    // =========================================
-    // SCENE 2: EXPO
-    // =========================================
+
+
+
 
     if (uSceneIndex == 1) {
 
-        // Christmas tree in EXPO is located
-        // around (-15, 0, -2).
-        //
-        // Exclude its area from automatic snow
-        // so the tree preserves its green material
-        // and colored lighting.
+
+
+
+
+
+
 
         float distanceToTree = length(
             vWorldPos.xz - vec2(-15.0, -2.0)
@@ -172,9 +172,9 @@ float calculateSnowCoverage(vec3 N) {
             return 0.0;
         }
 
-        // -------------------------------------
-        // Nur Alem sphere
-        // -------------------------------------
+
+
+
 
         vec3 sphereCenter = vec3(
             6.0,
@@ -192,8 +192,8 @@ float calculateSnowCoverage(vec3 N) {
             abs(distanceFromCenter - 30.0)
         );
 
-        // Only the dark sphere shell.
-        // Bright decorative facets are protected.
+
+
         float darkShellMask = 1.0 - smoothstep(
             0.12,
             0.28,
@@ -203,7 +203,7 @@ float calculateSnowCoverage(vec3 N) {
             )
         );
 
-        // Snow cap on the upper hemisphere.
+
         float capHeight =
             51.0 + noiseValue * 1.6;
 
@@ -219,13 +219,13 @@ float calculateSnowCoverage(vec3 N) {
             topHeightMask *
             slopeCoverage;
 
-        // -------------------------------------
-        // Dark EXPO podium / building roof
-        // -------------------------------------
 
-        // Podium centered around (6, -42).
-        // Protect vertical walls and keep snow
-        // on upward-facing roof surfaces.
+
+
+
+
+
+
 
         float insideX =
             1.0 - smoothstep(
@@ -243,7 +243,7 @@ float calculateSnowCoverage(vec3 N) {
 
         float podiumArea = insideX * insideZ;
 
-        // Main roof lies around y = 10.
+
         float podiumHeight =
             smoothstep(
                 8.8,
@@ -258,7 +258,7 @@ float calculateSnowCoverage(vec3 N) {
                 )
             );
 
-        // Strong coverage on flat roof sections.
+
         float podiumSnow =
             podiumArea *
             podiumHeight *
@@ -268,10 +268,10 @@ float calculateSnowCoverage(vec3 N) {
                 facingUp
             );
 
-        // Prevent snow from appearing on the tree.
+
         podiumSnow *= 1.0 - treeProtection;
 
-        // Use a denser layer on the dark podium.
+
         podiumSnow = clamp(
             podiumSnow * 1.25,
             0.0,
@@ -290,9 +290,9 @@ float calculateSnowCoverage(vec3 N) {
         );
     }
 
-    // =========================================
-    // SCENE 3: RIVERFRONT
-    // =========================================
+
+
+
 
     if (uSceneIndex == 2) {
 
@@ -314,9 +314,9 @@ float calculateSnowCoverage(vec3 N) {
     return 0.0;
 }
 
-// =============================================
-// MATTE WHITE SNOW
-// =============================================
+
+
+
 
 vec3 calculateMatteSnow(float fog) {
 
@@ -332,7 +332,7 @@ vec3 calculateMatteSnow(float fog) {
 
     snowColor *= 0.97 + 0.03 * variation;
 
-    // Reduce fog influence on the snow.
+
     return mix(
         snowColor,
         uFogColor,
@@ -340,9 +340,9 @@ vec3 calculateMatteSnow(float fog) {
     );
 }
 
-// =============================================
-// MAIN
-// =============================================
+
+
+
 
 void main() {
 
@@ -376,7 +376,7 @@ void main() {
 
     if (uLightingEnabled) {
 
-        // Main point lights
+
         for (int i = 0; i < 2; ++i) {
 
             result += calculateLight(
@@ -391,11 +391,14 @@ void main() {
             );
         }
 
-        // =====================================
-        // EXPO LIGHTING
-        // =====================================
+
+
+
 
         if (uSceneIndex == 1) {
+
+            vec3 entranceLight=vec3(clamp(vWorldPos.x,-51.0,65.0),3.8,-25.8);
+            result+=calculateLight(entranceLight,vec3(1.0,0.79,0.54),1.10,baseColor,N,V,0.06,0.018);
 
             float redPulse =
                 0.70 + 0.30 * sin(uTime * 1.6);
@@ -476,9 +479,9 @@ void main() {
                 2.35;
         }
 
-        // =====================================
-        // WINTER CITY LIGHTING
-        // =====================================
+
+
+
 
         if (uSceneIndex == 0) {
 
@@ -527,7 +530,7 @@ void main() {
                 groundMaskKhan *
                 1.4;
 
-            // Golden towers
+
             vec3 towerLeftPos = vec3(
                 -18.0,
                 22.0,
@@ -598,7 +601,7 @@ void main() {
                 groundMaskTower *
                 0.70;
 
-            // Mosque
+
             vec3 mosqueMainPos = vec3(
                 66.0,
                 10.0,
@@ -678,9 +681,9 @@ void main() {
                 0.22;
         }
 
-        // =====================================
-        // RIVERFRONT LIGHTING
-        // =====================================
+
+
+
 
         if (uSceneIndex == 2) {
 
@@ -733,9 +736,9 @@ void main() {
         }
     }
 
-    // =====================================
-    // FOG
-    // =====================================
+
+
+
 
     float dist = length(vWorldPos - uCamPos);
 
@@ -751,9 +754,9 @@ void main() {
         fog
     );
 
-    // =====================================
-    // EMISSIVE MATERIALS
-    // =====================================
+
+
+
 
     vec3 emission = uEmissive;
 
@@ -795,15 +798,21 @@ void main() {
 
     color += emission * (1.0 - 0.5 * fog);
 
-    // =====================================
-    // FINAL MATTE SNOW LAYER
-    // =====================================
+
+
+
 
     float snowCoverage = calculateSnowCoverage(N);
 
     if (snowCoverage > 0.0) {
 
         vec3 matteSnow = calculateMatteSnow(fog);
+        if(uSceneIndex==1 && uLightingEnabled){
+            vec2 closest=vec2(clamp(vWorldPos.x,-51.0,65.0),-25.8);
+            float warmth=exp(-distance(vWorldPos.xz,closest)*0.22);
+            matteSnow+=vec3(0.12,0.072,0.026)*warmth;
+        }
+
 
         float opacity = clamp(
             snowCoverage * 0.98,

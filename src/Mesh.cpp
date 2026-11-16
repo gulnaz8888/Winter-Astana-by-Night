@@ -27,14 +27,14 @@ Mesh::Mesh(const std::vector<float>& vertices,
         GL_STATIC_DRAW
     );
 
-    // Position: x, y, z
+
     glVertexAttribPointer(
         0, 3, GL_FLOAT, GL_FALSE,
         8 * sizeof(float), (void*)0
     );
     glEnableVertexAttribArray(0);
 
-    // Normal: nx, ny, nz
+
     glVertexAttribPointer(
         1, 3, GL_FLOAT, GL_FALSE,
         8 * sizeof(float),
@@ -42,7 +42,7 @@ Mesh::Mesh(const std::vector<float>& vertices,
     );
     glEnableVertexAttribArray(1);
 
-    // Texture coordinates: u, v
+
     glVertexAttribPointer(
         2, 2, GL_FLOAT, GL_FALSE,
         8 * sizeof(float),

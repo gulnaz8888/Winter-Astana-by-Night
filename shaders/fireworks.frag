@@ -13,7 +13,7 @@ void main() {
         discard;
     }
 
-    // Bright center with a soft outer glow.
+
     float glow = 1.0 - smoothstep(
         0.08,
         0.5,

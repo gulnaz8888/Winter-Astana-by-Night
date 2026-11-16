@@ -21,7 +21,7 @@ void main()
         1.0
     );
 
-    // Larger bright sparks
+
     gl_PointSize = clamp(
         2400.0 / distanceToCamera,
         6.0,
