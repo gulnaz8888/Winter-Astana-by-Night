@@ -102,6 +102,7 @@ bool lit(int building, int floor, int column) {
 
 RiverfrontScene::RiverfrontScene() {
     towerPhoto=std::make_unique<Texture>("assets/textures/northern_lights_reference.png");
+    iceTexture=std::make_unique<Texture>("assets/textures/ice.png");
     Material photo{{1.35f,1.65f,1.85f},{0.008f,0.02f,0.035f},{},towerPhoto.get()};
 
 
@@ -126,6 +127,14 @@ RiverfrontScene::RiverfrontScene() {
 
     Material snow{{0.67f,0.77f,0.90f}, {0.12f,0.16f,0.23f}, {}};
     Material ice{{0.17f,0.36f,0.52f}, {0.035f,0.075f,0.12f}, {}};
+
+
+    Material iceSurface{
+        {0.86f,0.94f,1.0f},
+        {0.025f,0.045f,0.065f},
+        {},
+        iceTexture.get()
+    };
     Material iceLines{{0.33f,0.58f,0.72f}, {0.065f,0.12f,0.17f}, {}};
     Material stone{{0.36f,0.40f,0.48f}, {0.045f,0.055f,0.08f}, {}};
     Material rail{{0.075f,0.10f,0.15f}, {0.018f,0.025f,0.04f}, {}};
@@ -144,6 +153,20 @@ RiverfrontScene::RiverfrontScene() {
     Material fairyLights{{1.f,0.89f,0.61f},{1.f,0.72f,0.32f},{}};
     snow.geometry.box({0,-2,-80}, {640,1,410});
     ice.geometry.box({0,-0.8f,-46}, {540,0.35f,123});
+
+
+
+
+    iceSurface.geometry.texturedQuad(
+        {-270.f,-0.448f,-107.5f},
+        {-270.f,-0.448f,15.5f},
+        {270.f,-0.448f,15.5f},
+        {270.f,-0.448f,-107.5f},
+        {0.f,0.f},
+        {0.f,4.f},
+        {12.f,4.f},
+        {12.f,0.f}
+    );
     stone.geometry.box({0,-1,27}, {450,3.5f,31});
     snow.geometry.box({0,2.5f,27}, {450,0.28f,31});
     stone.geometry.box({0,-1,-115}, {490,2.8f,18});
@@ -451,7 +474,7 @@ RiverfrontScene::RiverfrontScene() {
     };
     for (int i=0; i<9; ++i) person(skaters[i],i%3 == 0 ? 2.1f : 3.0f,i,true);
 
-    for (Material* m : { &snow,&ice,&iceLines,&stone,&rail,&photo,
+    for (Material* m : { &snow,&ice,&iceSurface,&iceLines,&stone,&rail,&photo,
                     &ledWhite,&ledBlue,&ledGold,
                    &ochre,&terracotta,&cream,&roof,&warm,&cool,&darkWindows,
                    &evergreen,&crimson,&skin,&gold,&fairyLights }) {
