@@ -16,6 +16,7 @@ public:
 private:
 
     std::unique_ptr<Texture> towerPhoto;
+    std::unique_ptr<Texture> iceTexture;
     std::vector<std::unique_ptr<Mesh>> meshes;
     Node root;
 };
