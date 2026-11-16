@@ -35,8 +35,15 @@ uniform bool uIsBaiterek;
 uniform bool uIsArchitecturalLED;
 uniform bool uAutoSnowEnabled;
 
+uniform int uWowBuildingId;
+uniform bool uWowWindow;
 
+uniform bool uWowActive;
+uniform float uWowProgress;
 
+// =============================================
+// LIGHTING
+// =============================================
 
 
 vec3 calculateLight(
@@ -341,6 +348,51 @@ vec3 calculateMatteSnow(float fog) {
 }
 
 
+
+
+
+
+float calculateBuildingLightReveal() {
+    if (!uWowActive || uSceneIndex != 0) {
+        return 1.0;
+    }
+
+    if (uWowBuildingId < 0) {
+        return 1.0;
+    }
+
+    // Building IDs 0-5 are in the front row,
+    // IDs 6-11 are in the back row.
+    int index = uWowBuildingId % 6;
+
+    float centerX;
+
+    if (index < 3) {
+        centerX = -38.0 - 26.0 * float(index);
+    } else {
+        centerX = 38.0 + 26.0 * float(index - 3);
+    }
+
+    // Left-to-right illumination order.
+    float order = clamp(
+        (centerX + 110.0) / 220.0,
+        0.0,
+        1.0
+    );
+
+    // Lighting sequence: seconds 2 to 5.
+    float activationTime = mix(
+        0.25,
+        0.625,
+        order
+    );
+
+    return smoothstep(
+        activationTime - 0.025,
+        activationTime + 0.025,
+        uWowProgress
+    );
+}
 
 
 
@@ -758,7 +810,17 @@ void main() {
 
 
 
+    float wowLightReveal = calculateBuildingLightReveal();
+    if (uWowWindow) {
+        color *= mix(0.08, 1.0, wowLightReveal);
+    }
+
+
     vec3 emission = uEmissive;
+
+    if (uWowWindow) {
+        emission *= wowLightReveal;
+    }
 
     if (uIsBaiterek) {
 
@@ -826,6 +888,54 @@ void main() {
             opacity
         );
     }
+
+    
+// =============================================
+// WOW MOMENT: CITY-WIDE LIGHT REVEAL
+// =============================================
+
+// New building windows already have their own
+// independent lighting animation.
+if (uWowActive &&
+    uSceneIndex == 0 &&
+    !uWowWindow) {
+
+    // Divide the city into spatial blocks,
+    // keeping each block illuminated together.
+    float blockX =
+        floor((vWorldPos.x + 120.0) / 25.0)
+        * 25.0 - 107.5;
+
+    float order = clamp(
+        (blockX + 110.0) / 220.0,
+        0.0,
+        1.0
+    );
+
+    float activationTime = mix(
+        0.25,
+        0.625,
+        order
+    );
+
+    float reveal = smoothstep(
+        activationTime - 0.025,
+        activationTime + 0.025,
+        uWowProgress
+    );
+
+    // Simulate the city waking up at night.
+    // Keep a small amount of visibility
+    // before each lighting block turns on.
+    float brightness = mix(
+        0.16,
+        1.0,
+        reveal
+    );
+
+    color *= brightness;
+}
+
 
     FragColor = vec4(color, 1.0);
 }
