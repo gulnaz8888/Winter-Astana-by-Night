@@ -94,13 +94,20 @@ int main() {
         camera.position = {0.f, 6.5f, 43.f};
         camera.target = {0.f, 22.f, -60.f};
 
-        Snow snow(4000);
+        Snow snow(3500);
         Fireworks fireworks;
 
         int activeScene = 0;
 
         bool lightingEnabled = true;
         bool lWasPressed = false;
+
+        // Cinematic Wow Moment
+        bool wowActive = false;
+        bool pWasPressed = false;
+        float wowStartTime = 0.0f;
+        float wowProgress = 1.0f;
+        const float wowDuration = 8.0f;
 
         bool fireworksEnabled = true;
         bool fWasPressed = false;
@@ -124,7 +131,7 @@ int main() {
         );
 
         const int snowCounts[3] = {
-            4000, 4000, 1000
+            3500, 3500, 1000
         };
 
         const glm::vec3 fogColors[3] = {
@@ -204,6 +211,27 @@ int main() {
             ) == GLFW_PRESS) {
                 glfwSetWindowShouldClose(
                     window, GLFW_TRUE
+                );
+            }
+
+            // Start or restart Wow Moment with P in Winter City
+            bool pPressed =
+                glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS;
+
+            if (pPressed && !pWasPressed && activeScene == 0) {
+                wowActive = true;
+                wowStartTime = time;
+                wowProgress = 0.0f;
+                lightingEnabled = true;
+            }
+
+            pWasPressed = pPressed;
+
+            if (wowActive) {
+                wowProgress = std::clamp(
+                    (time - wowStartTime) / wowDuration,
+                    0.0f,
+                    1.0f
                 );
             }
 
@@ -368,11 +396,34 @@ int main() {
 
                 camera.target =
                     camTargets[activeScene];
+                wowActive = false;
             }
 
             if (activeScene == 1) {
                 camera.position.x =
                     std::sin(time * 0.25f) * 5.f;
+            }
+
+            // Cinematic camera movement in Winter City
+            if (wowActive && activeScene == 0) {
+                float t = wowProgress;
+
+                // Smooth ease-in/ease-out
+                float smoothT = t * t * (3.0f - 2.0f * t);
+
+                const glm::vec3 startPos(0.0f, 6.5f, 43.0f);
+                const glm::vec3 endPos(0.0f, 85.0f, 100.0f);
+
+                const glm::vec3 startTarget(0.0f, 22.0f, -60.0f);
+                const glm::vec3 endTarget(0.0f, 12.0f, -55.0f);
+
+                camera.position = glm::mix(
+                    startPos, endPos, smoothT
+                );
+
+                camera.target = glm::mix(
+                    startTarget, endTarget, smoothT
+                );
             }
 
             glm::mat4 view = camera.view();
@@ -442,6 +493,8 @@ int main() {
             );
 
             shader.setFloat("uTime", time);
+            shader.setInt("uWowActive", wowActive ? 1 : 0);
+            shader.setFloat("uWowProgress", wowProgress);
 
             // NEW: Send snow switch to fragment shader.
             shader.setInt(

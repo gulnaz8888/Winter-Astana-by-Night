@@ -48,6 +48,7 @@ private:
     void buildAvenue();
     void buildLamps();
     void buildSkyline();
+    void buildExtraCity();
     void buildMosque();
     void buildKhanShatyr();
     void buildBaiterek();

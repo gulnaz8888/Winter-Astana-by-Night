@@ -21,6 +21,8 @@ struct Node {
     glm::vec3 uvScale{1.f};
     bool isBaiterek = false;
     bool isArchitecturalLED = false;
+    int wowBuildingId = -1;
+    bool wowWindow = false;
 
     std::vector<std::unique_ptr<Node>> children;
 
@@ -38,10 +40,22 @@ struct Node {
         return m;
     }
 
-    void draw(const Shader& shader, const glm::mat4& parentWorld,
-              bool parentIsBaiterek = false) const {
+    void draw(
+        const Shader& shader,
+        const glm::mat4& parentWorld,
+        bool parentIsBaiterek = false,
+        int parentWowBuildingId = -1
+    ) const {
+
         glm::mat4 world = parentWorld * localMatrix();
-        bool markedAsBaiterek = parentIsBaiterek || isBaiterek;
+
+        bool markedAsBaiterek =
+            parentIsBaiterek || isBaiterek;
+
+        int activeBuildingId =
+            wowBuildingId >= 0
+            ? wowBuildingId
+            : parentWowBuildingId;
 
         if (mesh) {
             shader.setMat4("uModel", glm::scale(world, scale));
@@ -53,6 +67,8 @@ struct Node {
             shader.setInt("uIsBaiterek", markedAsBaiterek ? 1 : 0);
             // Must be set for EVERY mesh, so other meshes reset it to zero.
             shader.setInt("uIsArchitecturalLED", isArchitecturalLED ? 1 : 0);
+            shader.setInt("uWowBuildingId", activeBuildingId);
+            shader.setInt("uWowWindow", wowWindow ? 1 : 0);
 
             if (texture) {
                 texture->bind(0);
@@ -63,7 +79,12 @@ struct Node {
             mesh->draw();
         }
         for (const auto& child : children) {
-            child->draw(shader, world, markedAsBaiterek);
+            child->draw(
+                shader,
+                world,
+                markedAsBaiterek,
+                activeBuildingId
+            );
         }
     }
 };

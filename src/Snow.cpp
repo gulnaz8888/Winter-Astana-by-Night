@@ -68,23 +68,26 @@ void Snow::setWind(float x, float z) {
     windVelocity.z = z;
 }
 
+
 void Snow::resetParticle(
     Particle& particle,
     bool randomHeight
 ) {
+    // Wider snowfall area across the winter city
     particle.position.x = randomFloat(
-        -40.0f, 40.0f
+        -85.0f, 85.0f
     );
 
     particle.position.z = randomFloat(
-        -30.0f, 20.0f
+        -105.0f, 65.0f
     );
 
     if (randomHeight) {
         particle.position.y = randomFloat(
             5.0f, 100.0f
         );
-    } else {
+    }
+    else {
         particle.position.y = randomFloat(
             80.0f, 110.0f
         );
@@ -94,6 +97,7 @@ void Snow::resetParticle(
         4.0f, 12.0f
     );
 }
+
 
 void Snow::update(float deltaTime) {
     // Movement remains independent of frame rate.
@@ -116,17 +120,21 @@ void Snow::update(float deltaTime) {
 
         // Wrap particles across the snowy area.
         // This prevents strong wind from emptying the scene.
-        if (particle.position.x > 40.f) {
-            particle.position.x -= 80.f;
-        } else if (particle.position.x < -40.f) {
-            particle.position.x += 80.f;
+
+        if (particle.position.x > 85.0f) {
+            particle.position.x -= 170.0f;
+        }
+        else if (particle.position.x < -85.0f) {
+            particle.position.x += 170.0f;
         }
 
-        if (particle.position.z > 20.f) {
-            particle.position.z -= 50.f;
-        } else if (particle.position.z < -30.f) {
-            particle.position.z += 50.f;
+        if (particle.position.z > 65.0f) {
+            particle.position.z -= 170.0f;
         }
+        else if (particle.position.z < -105.0f) {
+            particle.position.z += 170.0f;
+        }
+
 
         // Recycle particles reaching the ground.
         if (particle.position.y < 0.f) {

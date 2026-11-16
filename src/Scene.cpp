@@ -142,6 +142,7 @@ Scene::Scene()
     buildMosque();
     buildKhanShatyr();
     buildBaiterek();
+    buildExtraCity();
 }
 
 Node* Scene::attach(
@@ -1234,6 +1235,256 @@ void Scene::buildBaiterek() {
 // =====================================================
 // UPDATE AND DRAW
 // =====================================================
+
+
+void Scene::buildExtraCity() {
+
+    // =====================================
+    // EXTRA CITY: 12 BACKGROUND BUILDINGS
+    // =====================================
+
+    struct BuildingInfo {
+        float x;
+        float z;
+        float width;
+        float height;
+        float depth;
+        bool office;
+    };
+
+
+
+
+    const BuildingInfo buildings[12] = {
+
+        // FRONT ROW - small houses near the avenue
+        // Positioned on the empty areas beside the roads
+        {-35.f,  10.f, 14.f, 10.f, 13.f, false},
+        {-65.f,  10.f, 16.f, 12.f, 14.f, false},
+        { 35.f,  10.f, 14.f, 10.f, 13.f, false},
+        { 65.f,  10.f, 16.f, 12.f, 14.f, false},
+
+        // MIDDLE ROW - shifted outward to keep landmarks visible
+        {-64.f, -32.f, 16.f, 16.f, 15.f, false},
+        {-92.f, -32.f, 17.f, 19.f, 15.f, true },
+        { 64.f, -32.f, 16.f, 16.f, 15.f, false},
+        { 92.f, -32.f, 17.f, 19.f, 15.f, true },
+
+        // BACK ROW - behind Khan Shatyr and the mosque
+        // These cannot obstruct the landmarks from the front
+        {-44.f, -140.f, 16.f, 17.f, 15.f, false},
+        {-88.f, -140.f, 18.f, 24.f, 16.f, true },
+        { 44.f, -140.f, 16.f, 17.f, 15.f, false},
+        { 88.f, -140.f, 18.f, 24.f, 16.f, true }
+    };
+
+
+
+    // =====================================
+    // SIDE ROADS
+    // =====================================
+
+    SceneGeometry roads;
+
+
+    for (float side : {-1.f, 1.f}) {
+
+        for (float xOffset : {25.f, 51.f, 77.f}) {
+            roads.box(
+                { side * xOffset, -0.015f, -48.f },
+                { 5.f, 0.055f, 205.f }
+            );
+        }
+    }
+
+
+    attach(
+        root,
+        roads,
+        { 0.48f, 0.53f, 0.60f },
+        { 0.015f, 0.02f, 0.03f },
+        asphaltTexture.get()
+    );
+
+    // =====================================
+    // GENERATE BUILDINGS
+    // =====================================
+
+    for (int i = 0; i < 12; ++i) {
+
+        const BuildingInfo& b = buildings[i];
+
+        auto group = std::make_unique<Node>();
+
+        group->position = {
+            b.x, 0.f, b.z
+        };
+
+        // Each building has its own lighting ID.
+        group->wowBuildingId = i;
+
+        Node* building =
+            root.addChild(std::move(group));
+
+        SceneGeometry body;
+        SceneGeometry roof;
+        SceneGeometry windows;
+        SceneGeometry darkWindows;
+        SceneGeometry details;
+
+        // Main building structure
+        body.box(
+            { 0.f, 0.f, 0.f },
+            { b.width, b.height, b.depth }
+        );
+
+        // Decorative roof edge
+        roof.box(
+            { 0.f, b.height, 0.f },
+            {
+                b.width + 0.65f,
+                0.35f,
+                b.depth + 0.65f
+            }
+        );
+
+        // Snowy roof
+        roof.box(
+            { 0.f, b.height + 0.35f, 0.f },
+            {
+                b.width + 0.85f,
+                0.15f,
+                b.depth + 0.85f
+            }
+        );
+
+        // Office buildings get a top structure.
+        if (b.office) {
+            details.box(
+                { 0.f, b.height + 0.5f, 0.f },
+                { b.width * 0.35f, 1.5f, b.depth * 0.35f }
+            );
+        }
+
+        // =====================================
+        // WINDOWS
+        // =====================================
+
+        const float floorHeight = 3.1f;
+
+        for (float y = 2.0f;
+            y < b.height - 1.0f;
+            y += floorHeight) {
+
+            // Front and back windows
+            for (int col = -2; col <= 2; ++col) {
+
+                float x = col * (b.width / 6.0f);
+
+                bool lit =
+                    ((i + col + static_cast<int>(y)) % 4 != 0);
+
+                SceneGeometry& target =
+                    lit ? windows : darkWindows;
+
+                target.box(
+                    { x, y, b.depth * 0.5f + 0.055f },
+                    { 1.25f, 1.55f, 0.075f }
+                );
+
+                target.box(
+                    { x, y, -b.depth * 0.5f - 0.055f },
+                    { 1.25f, 1.55f, 0.075f }
+                );
+            }
+
+            // Side windows
+            for (int col = -1; col <= 1; ++col) {
+
+                float z = col * (b.depth / 4.0f);
+
+                bool lit =
+                    ((i + col + static_cast<int>(y)) % 3 != 0);
+
+                SceneGeometry& target =
+                    lit ? windows : darkWindows;
+
+                target.box(
+                    { b.width * 0.5f + 0.055f, y, z },
+                    { 0.075f, 1.55f, 1.25f }
+                );
+
+                target.box(
+                    { -b.width * 0.5f - 0.055f, y, z },
+                    { 0.075f, 1.55f, 1.25f }
+                );
+            }
+        }
+
+        // =====================================
+        // ATTACH MATERIALS
+        // =====================================
+
+        if (b.office) {
+
+            attach(
+                *building,
+                body,
+                { 0.42f, 0.59f, 0.76f },
+                { 0.025f, 0.055f, 0.09f },
+                blueGlassTexture.get()
+            );
+
+        }
+        else {
+
+            attach(
+                *building,
+                body,
+                { 0.70f, 0.74f, 0.79f },
+                { 0.035f, 0.045f, 0.055f },
+                brickTexture.get()
+            );
+        }
+
+        attach(
+            *building,
+            roof,
+            { 0.85f, 0.89f, 0.95f },
+            { 0.08f, 0.10f, 0.13f },
+            snowTexture.get()
+        );
+
+        attach(
+            *building,
+            details,
+            { 0.36f, 0.43f, 0.51f },
+            { 0.025f, 0.035f, 0.055f },
+            silverMetalTexture.get()
+        );
+
+        // Warm illuminated windows
+        Node* litNode = attach(
+            *building,
+            windows,
+            { 1.0f, 0.75f, 0.35f },
+            { 0.85f, 0.48f, 0.12f }
+        );
+
+        if (litNode) {
+            litNode->wowWindow = true;
+        }
+
+        // Permanently dark windows
+        attach(
+            *building,
+            darkWindows,
+            { 0.10f, 0.15f, 0.23f },
+            { 0.005f, 0.012f, 0.025f }
+        );
+    }
+}
+
 
 void Scene::update(float time) {
     if (beaconPivot) {
