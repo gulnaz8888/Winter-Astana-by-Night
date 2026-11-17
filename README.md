@@ -62,3 +62,14 @@ Scene architecture and geometry are in `Scene.cpp`, `SceneGeometry.h` and
 `RiverfrontScene.cpp`. Shared shaders, lighting and snowfall retain their existing
 implementation. Ice texturing, interactive cameras and fireworks remain team
 handoff tasks.
+
+## Background Music
+
+Track: We Wish You a Merry Christmas
+Artist: Kevin MacLeod
+Source: https://www.incompetech.com/music/royalty-free/index.html?isrc=USUAN1100369
+License: Creative Commons Attribution 4.0
+https://creativecommons.org/licenses/by/4.0/
+
+Music starts when entering a winter scene, continues
+when switching between scenes, and stops in the LRT menu.
