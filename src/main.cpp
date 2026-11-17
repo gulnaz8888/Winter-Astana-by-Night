@@ -1,3 +1,6 @@
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -7,6 +10,8 @@
 #include <exception>
 #include <iostream>
 #include <string>
+
+#include <glm/glm.hpp>
 #include <glm/geometric.hpp>
 
 #include "Shader.h"
@@ -24,6 +29,7 @@
 static void onResize(GLFWwindow*, int width, int height) {
     glViewport(0, 0, width, height);
 }
+
 
 struct OrbitControl {
     glm::vec3 target = {0.f, 0.f, 0.f};
@@ -169,6 +175,8 @@ int main() {
         ChristmasMusicPlayer music(
             "assets/audio/christmas.mp3"
         );
+        // Play welcome announcement when the program starts
+        music.playWelcome();
 
         bool menuOpen = true;
         bool mouseWasPressed = false;
@@ -290,6 +298,9 @@ int main() {
         int frames = 0;
 
         while (!glfwWindowShouldClose(window)) {
+            
+            // Update audio announcements
+            music.update();
             double now = glfwGetTime();
             float time = static_cast<float>(now);
 
@@ -547,13 +558,17 @@ int main() {
 
             const bool menuWasOpen = menuOpen;
 
+
             if (
-                glfwGetKey(window, GLFW_KEY_M)
-                == GLFW_PRESS
+              glfwGetKey(window, GLFW_KEY_M)
+              == GLFW_PRESS
             ) {
+               if (!menuOpen) {
+                  music.playWelcome();
+                }
+
                 menuOpen = true;
             }
-
             int windowWidth, windowHeight;
 
             glfwGetWindowSize(
@@ -622,7 +637,10 @@ int main() {
             }
 
             if (choose) {
-                menuOpen = false;
+             menuOpen = false;
+
+              // Announce selected LRT station
+             music.playStation(requested);
             }
 
             // MUSIC:
