@@ -45,7 +45,6 @@ uniform float uWowProgress;
 // LIGHTING
 // =============================================
 
-
 vec3 calculateLight(
     vec3 lightPos,
     vec3 lightColor,
@@ -84,10 +83,6 @@ vec3 calculateLight(
         * attenuation;
 }
 
-
-
-
-
 float snowNoise(vec3 p) {
     float a = sin(p.x * 0.43 + p.z * 0.37);
     float b = sin(p.z * 0.89 - p.x * 0.21);
@@ -97,11 +92,9 @@ float snowNoise(vec3 p) {
 }
 
 float calculateSnowCoverage(vec3 N) {
-
     if (!uAutoSnowEnabled) {
         return 0.0;
     }
-
 
     if (uIsBaiterek || uIsArchitecturalLED) {
         return 0.0;
@@ -119,7 +112,6 @@ float calculateSnowCoverage(vec3 N) {
     );
 
     float noiseValue = snowNoise(vWorldPos);
-
     float facingUp = clamp(N.y, 0.0, 1.0);
 
     float slopeCoverage = smoothstep(
@@ -128,12 +120,7 @@ float calculateSnowCoverage(vec3 N) {
         facingUp + noiseValue * 0.075
     );
 
-
-
-
-
     if (uSceneIndex == 0) {
-
         float heightCoverage = smoothstep(
             1.5,
             4.0,
@@ -149,19 +136,7 @@ float calculateSnowCoverage(vec3 N) {
         );
     }
 
-
-
-
-
     if (uSceneIndex == 1) {
-
-
-
-
-
-
-
-
         float distanceToTree = length(
             vWorldPos.xz - vec2(-15.0, -2.0)
         );
@@ -179,10 +154,6 @@ float calculateSnowCoverage(vec3 N) {
             return 0.0;
         }
 
-
-
-
-
         vec3 sphereCenter = vec3(
             6.0,
             38.0,
@@ -199,8 +170,6 @@ float calculateSnowCoverage(vec3 N) {
             abs(distanceFromCenter - 30.0)
         );
 
-
-
         float darkShellMask = 1.0 - smoothstep(
             0.12,
             0.28,
@@ -209,7 +178,6 @@ float calculateSnowCoverage(vec3 N) {
                 uColor.b
             )
         );
-
 
         float capHeight =
             51.0 + noiseValue * 1.6;
@@ -225,14 +193,6 @@ float calculateSnowCoverage(vec3 N) {
             darkShellMask *
             topHeightMask *
             slopeCoverage;
-
-
-
-
-
-
-
-
 
         float insideX =
             1.0 - smoothstep(
@@ -250,7 +210,6 @@ float calculateSnowCoverage(vec3 N) {
 
         float podiumArea = insideX * insideZ;
 
-
         float podiumHeight =
             smoothstep(
                 8.8,
@@ -265,7 +224,6 @@ float calculateSnowCoverage(vec3 N) {
                 )
             );
 
-
         float podiumSnow =
             podiumArea *
             podiumHeight *
@@ -275,9 +233,7 @@ float calculateSnowCoverage(vec3 N) {
                 facingUp
             );
 
-
         podiumSnow *= 1.0 - treeProtection;
-
 
         podiumSnow = clamp(
             podiumSnow * 1.25,
@@ -297,12 +253,7 @@ float calculateSnowCoverage(vec3 N) {
         );
     }
 
-
-
-
-
     if (uSceneIndex == 2) {
-
         float heightCoverage = smoothstep(
             2.5,
             5.0,
@@ -321,12 +272,7 @@ float calculateSnowCoverage(vec3 N) {
     return 0.0;
 }
 
-
-
-
-
 vec3 calculateMatteSnow(float fog) {
-
     vec3 snowColor = vec3(
         0.96,
         0.98,
@@ -339,18 +285,12 @@ vec3 calculateMatteSnow(float fog) {
 
     snowColor *= 0.97 + 0.03 * variation;
 
-
     return mix(
         snowColor,
         uFogColor,
         fog * 0.32
     );
 }
-
-
-
-
-
 
 float calculateBuildingLightReveal() {
     if (!uWowActive || uSceneIndex != 0) {
@@ -361,8 +301,6 @@ float calculateBuildingLightReveal() {
         return 1.0;
     }
 
-    // Building IDs 0-5 are in the front row,
-    // IDs 6-11 are in the back row.
     int index = uWowBuildingId % 6;
 
     float centerX;
@@ -373,14 +311,12 @@ float calculateBuildingLightReveal() {
         centerX = 38.0 + 26.0 * float(index - 3);
     }
 
-    // Left-to-right illumination order.
     float order = clamp(
         (centerX + 110.0) / 220.0,
         0.0,
         1.0
     );
 
-    // Lighting sequence: seconds 2 to 5.
     float activationTime = mix(
         0.25,
         0.625,
@@ -394,24 +330,33 @@ float calculateBuildingLightReveal() {
     );
 }
 
-
-
 void main() {
-
     if (uIsArchitecturalLED && !uLightingEnabled) {
         discard;
     }
 
     vec3 baseColor = uColor;
 
+    // Detect textured foliage in the EXPO scene.
+    bool isExpoTreeFoliage =
+        (uSceneIndex == 1) &&
+        uUseTexture &&
+        (distance(vWorldPos.xz, vec2(-15.0, -2.0)) < 12.0) &&
+        (vWorldPos.y > 0.0) &&
+        (vWorldPos.y < 30.0);
+
     if (uUseTexture) {
-
         vec2 uv = vTexCoord * uUVScale.xy;
+        vec3 texColor = texture(uTexture, uv).rgb;
 
-        baseColor *= texture(
-            uTexture,
-            uv
-        ).rgb;
+        if (isExpoTreeFoliage) {
+            // Keep the pine image recognizable.
+            // Darken the brightest snow and green areas
+            // without flattening the needle detail.
+            baseColor = texColor * vec3(0.78, 0.86, 0.78);
+        } else {
+            baseColor = texColor;
+        }
     }
 
     vec3 N = normalize(vNormal);
@@ -427,10 +372,7 @@ void main() {
     }
 
     if (uLightingEnabled) {
-
-
         for (int i = 0; i < 2; ++i) {
-
             result += calculateLight(
                 uLights[i].position,
                 uLights[i].color,
@@ -443,14 +385,23 @@ void main() {
             );
         }
 
-
-
-
-
         if (uSceneIndex == 1) {
+            vec3 entranceLight = vec3(
+                clamp(vWorldPos.x, -51.0, 65.0),
+                3.8,
+                -25.8
+            );
 
-            vec3 entranceLight=vec3(clamp(vWorldPos.x,-51.0,65.0),3.8,-25.8);
-            result+=calculateLight(entranceLight,vec3(1.0,0.79,0.54),1.10,baseColor,N,V,0.06,0.018);
+            result += calculateLight(
+                entranceLight,
+                vec3(1.0, 0.79, 0.54),
+                1.10,
+                baseColor,
+                N,
+                V,
+                0.06,
+                0.018
+            );
 
             float redPulse =
                 0.70 + 0.30 * sin(uTime * 1.6);
@@ -473,10 +424,15 @@ void main() {
                 1.5
             );
 
+            // Previously 4.8: this was overexposing
+            // the lower half of the Christmas tree.
+            float treeLightIntensity =
+                isExpoTreeFoliage ? 0.12 : 0.25;
+
             result += calculateLight(
                 treeLightPos,
                 treeColor,
-                4.8,
+                treeLightIntensity,
                 baseColor,
                 N,
                 V,
@@ -525,18 +481,28 @@ void main() {
                 vec3(0.12, 0.30, 1.00)
                     * bluePulse * blueFalloff;
 
+            // Only upward-facing ground receives
+            // the decorative colored wash.
+            // Exclude the tree's textured foliage.
+            float groundLightStrength =
+                isExpoTreeFoliage ? 0.0 : 0.45;
+
             result +=
                 coloredGroundLight *
                 groundMask *
-                2.35;
+                groundLightStrength;
+
+            // Cap light on pine so the image
+            // remains dark green and detailed.
+            if (isExpoTreeFoliage) {
+                result = min(
+                    result,
+                    baseColor * 0.82 + vec3(0.025)
+                );
+            }
         }
 
-
-
-
-
         if (uSceneIndex == 0) {
-
             vec3 khanLightPos = vec3(
                 -68.0,
                 18.0,
@@ -581,7 +547,6 @@ void main() {
                 khanArea *
                 groundMaskKhan *
                 1.4;
-
 
             vec3 towerLeftPos = vec3(
                 -18.0,
@@ -652,7 +617,6 @@ void main() {
                 (towerLeftArea + towerRightArea) *
                 groundMaskTower *
                 0.70;
-
 
             vec3 mosqueMainPos = vec3(
                 66.0,
@@ -733,12 +697,7 @@ void main() {
                 0.22;
         }
 
-
-
-
-
         if (uSceneIndex == 2) {
-
             float nearestX = clamp(
                 floor(vWorldPos.x / 22.0 + 0.5)
                     * 22.0,
@@ -788,10 +747,6 @@ void main() {
         }
     }
 
-
-
-
-
     float dist = length(vWorldPos - uCamPos);
 
     float fog = clamp(
@@ -806,15 +761,11 @@ void main() {
         fog
     );
 
-
-
-
-
     float wowLightReveal = calculateBuildingLightReveal();
+
     if (uWowWindow) {
         color *= mix(0.08, 1.0, wowLightReveal);
     }
-
 
     vec3 emission = uEmissive;
 
@@ -823,9 +774,7 @@ void main() {
     }
 
     if (uIsBaiterek) {
-
         if (uLightingEnabled) {
-
             float shaftGlow = 1.0 - smoothstep(
                 12.0,
                 43.0,
@@ -841,9 +790,7 @@ void main() {
                 * 0.35;
 
             emission += goldenIllumination;
-
         } else {
-
             float shaftGlow = 1.0 - smoothstep(
                 12.0,
                 43.0,
@@ -860,21 +807,24 @@ void main() {
 
     color += emission * (1.0 - 0.5 * fog);
 
-
-
-
-
     float snowCoverage = calculateSnowCoverage(N);
 
     if (snowCoverage > 0.0) {
-
         vec3 matteSnow = calculateMatteSnow(fog);
-        if(uSceneIndex==1 && uLightingEnabled){
-            vec2 closest=vec2(clamp(vWorldPos.x,-51.0,65.0),-25.8);
-            float warmth=exp(-distance(vWorldPos.xz,closest)*0.22);
-            matteSnow+=vec3(0.12,0.072,0.026)*warmth;
-        }
 
+        if (uSceneIndex == 1 && uLightingEnabled) {
+            vec2 closest = vec2(
+                clamp(vWorldPos.x, -51.0, 65.0),
+                -25.8
+            );
+
+            float warmth = exp(
+                -distance(vWorldPos.xz, closest) * 0.22
+            );
+
+            matteSnow +=
+                vec3(0.12, 0.072, 0.026) * warmth;
+        }
 
         float opacity = clamp(
             snowCoverage * 0.98,
@@ -889,53 +839,42 @@ void main() {
         );
     }
 
-    
-// =============================================
-// WOW MOMENT: CITY-WIDE LIGHT REVEAL
-// =============================================
+    // WOW MOMENT: CITY-WIDE LIGHT REVEAL
+    if (
+        uWowActive &&
+        uSceneIndex == 0 &&
+        !uWowWindow
+    ) {
+        float blockX =
+            floor((vWorldPos.x + 120.0) / 25.0)
+            * 25.0 - 107.5;
 
-// New building windows already have their own
-// independent lighting animation.
-if (uWowActive &&
-    uSceneIndex == 0 &&
-    !uWowWindow) {
+        float order = clamp(
+            (blockX + 110.0) / 220.0,
+            0.0,
+            1.0
+        );
 
-    // Divide the city into spatial blocks,
-    // keeping each block illuminated together.
-    float blockX =
-        floor((vWorldPos.x + 120.0) / 25.0)
-        * 25.0 - 107.5;
+        float activationTime = mix(
+            0.25,
+            0.625,
+            order
+        );
 
-    float order = clamp(
-        (blockX + 110.0) / 220.0,
-        0.0,
-        1.0
-    );
+        float reveal = smoothstep(
+            activationTime - 0.025,
+            activationTime + 0.025,
+            uWowProgress
+        );
 
-    float activationTime = mix(
-        0.25,
-        0.625,
-        order
-    );
+        float brightness = mix(
+            0.16,
+            1.0,
+            reveal
+        );
 
-    float reveal = smoothstep(
-        activationTime - 0.025,
-        activationTime + 0.025,
-        uWowProgress
-    );
-
-    // Simulate the city waking up at night.
-    // Keep a small amount of visibility
-    // before each lighting block turns on.
-    float brightness = mix(
-        0.16,
-        1.0,
-        reveal
-    );
-
-    color *= brightness;
-}
-
+        color *= brightness;
+    }
 
     FragColor = vec4(color, 1.0);
 }

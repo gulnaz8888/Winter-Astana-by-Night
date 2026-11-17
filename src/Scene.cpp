@@ -339,6 +339,43 @@ void Scene::buildAvenue() {
     }
 
 
+    // Snowy evergreen forest along both outer edges of Winter City.
+    // Kept outside residential blocks, roads and the central avenue.
+    for (float side : {-1.f, 1.f}) {
+        for (int i = 0; i < 18; ++i) {
+            float x = side * (107.0f + (i % 3) * 2.6f);
+            float z = 47.f - i * 10.0f + ((i % 3) - 1) * 1.3f;
+            float h = 6.0f + (i % 5) * 0.65f;
+            float crownRadius = 2.65f + (i % 3) * 0.18f;
+            int seed = i + (side > 0.f ? 120 : 80);
+
+            trunks.frustum(
+                {x, 0.f, z}, 0.25f, 0.16f, 2.3f, 8
+            );
+
+            for (int tier = 0; tier < 4; ++tier) {
+                float base = 0.85f + tier * h * 0.17f;
+                float radius = crownRadius * (1.f - tier * 0.19f);
+                float tierHeight = h * 0.47f;
+
+                green.frustum(
+                    {x, base, z}, radius, 0.f, tierHeight, 12
+                );
+                fluffyTreeSnow(
+                    treeSnow, x, z, base, radius, tierHeight,
+                    seed + tier * 7
+                );
+            }
+
+            fluffyMound(
+                groundSnow, x, z,
+                1.8f + (i % 3) * 0.18f,
+                0.30f + (i % 2) * 0.07f,
+                seed
+            );
+        }
+    }
+
     for (int i = 0; i < 5; ++i) {
         float z = 26.f - i * 15.f;
 
