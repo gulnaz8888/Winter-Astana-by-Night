@@ -18,6 +18,7 @@
 #include "Snow.h"
 #include "Fireworks.h"
 #include "LrtMenu.h"
+#include "MusicPlayer.h"
 
 static void onResize(GLFWwindow*, int width, int height) {
     glViewport(0, 0, width, height);
@@ -92,6 +93,7 @@ int main() {
         RiverfrontScene riverfrontScene;
 
         LrtMenu menu;
+        ChristmasMusicPlayer music("assets/audio/christmas.mp3");
         bool menuOpen = true;
         bool mouseWasPressed = false;
 
@@ -370,6 +372,7 @@ int main() {
 
             int requested = activeScene;
             bool choose = false;
+            const bool menuWasOpen = menuOpen;
             if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) menuOpen = true;
             int windowWidth, windowHeight;
             glfwGetWindowSize(window, &windowWidth, &windowHeight);
@@ -406,6 +409,11 @@ int main() {
             }
 
             if (choose) menuOpen = false;
+            if (menuWasOpen && !menuOpen) {
+                music.playFromStart();
+                } else if (!menuWasOpen && menuOpen) {
+                    music.stopAndRewind();
+                    }
 
             if (requested != activeScene) {
                 activeScene = requested;
