@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include <memory>
@@ -12,6 +13,7 @@
 class ExpoScene {
 public:
     ExpoScene();
+
     ExpoScene(const ExpoScene&) = delete;
     ExpoScene& operator=(const ExpoScene&) = delete;
 
@@ -34,9 +36,14 @@ private:
     Mesh bigSphere;
     Mesh torus;
 
+    // Existing textures
     std::unique_ptr<Texture> podiumGlass;
     std::unique_ptr<Texture> expoGlass;
     std::unique_ptr<Texture> pineTexture;
+
+    // New building textures
+    std::unique_ptr<Texture> buildingGlass;
+    std::unique_ptr<Texture> buildingBrick;
 
     Node root;
     Node* starPivot = nullptr;
@@ -78,7 +85,12 @@ private:
         glm::vec3 core
     );
 
-    void buildArches(float x0, float x1, float z);
+    void buildArches(
+        float x0,
+        float x1,
+        float z
+    );
+
     void buildBench(glm::vec3 position);
 
     void buildPerson(
@@ -90,4 +102,7 @@ private:
     );
 
     void buildCrowd();
+    void buildDistrict();
+    void buildWinterPark();
+    void buildExpoLayout();
 };
