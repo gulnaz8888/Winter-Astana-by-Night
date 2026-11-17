@@ -8,13 +8,13 @@ Winter Astana by Night is a real-time interactive 3D application developed in **
 
 ## Features and scenes
 
-**1 - Baiterek / Winter City.** A snowy promenade with the Baiterek monument, Khan Shatyr, a mosque, architectural towers, detailed residential buildings, lamps, benches, and trees. Press `P` to start an approximately eight-second cinematic: the camera rises over the city while building lights illuminate progressively.
+**1 — Baiterek / Winter City.** A snowy promenade with the Baiterek monument, Khan Shatyr, a mosque, architectural towers, detailed residential buildings, lamps, benches, and trees. Press `P` to start an approximately eight-second cinematic: the camera rises over the city while building lights illuminate progressively.
 
-**2 - EXPO / Nur Alem.** A stylized spherical EXPO landmark with architectural panels, a glazed podium, warm entrance lighting, festive details, and gentle automatic camera motion until manual camera control is used.
+**2 — EXPO / Nur Alem.** A stylized spherical EXPO landmark with architectural panels, a glazed podium, warm entrance lighting, festive details, and gentle automatic camera motion until manual camera control is used.
 
-**3 - Ishim Riverfront.** A frozen river with textured ice, three curved Northern Lights towers, surrounding buildings, winter decorations, snowfall, and animated fireworks.
+**3 — Ishim Riverfront.** A frozen river with textured ice, three curved Northern Lights towers, surrounding buildings, winter decorations, snowfall, and animated fireworks.
 
-**LRT destination menu.** An animated 3D carriage with selectable destinations and mouse-based selection. Background music (credited under CC BY 4.0) begins when entering a scene, continues across scene changes, can be toggled with `V`, and stops when returning to the menu.
+**LRT destination menu.** An animated 3D carriage with selectable destinations and mouse-based selection. A welcome voice announcement plays on application startup, and a destination-specific station announcement plays when a scene is selected. Background music (credited under CC BY 4.0) starts on entering a scene, continues across scene changes, can be toggled with `V`, and stops when returning to the menu. The music volume is reduced during voice announcements and restored afterward.
 
 ## Build instructions
 
@@ -92,6 +92,8 @@ The camera switches from preset/automatic movement to manual orbit control when 
 | **R7 - Performance** | Frame-based animation and FPS counter updated in the window title | `src/main.cpp`, `src/Snow.*`, `src/Fireworks.*` |
 | **R8 - Reproducible build** | CMake-based C++ project with dependencies, shaders and assets included in the repository | `CMakeLists.txt`, `external/`, this README |
 
+**LRT audio:** `welcome.mp3` plays on launch; `Baiterek_station.mp3`, `Expo_station.mp3`, and `Ishim_station.mp3` are triggered by the corresponding destination selection. Voice announcements temporarily lower the volume of background music.
+
 **Topic-specific stretch effects:** normal-based snow coverage on upward-facing surfaces; adjustable snowfall wind; animated riverfront fireworks. **Wow Moment:** a rising camera and block-by-block lighting reveal in Winter City.
 
 ### Performance verification
@@ -118,12 +120,14 @@ Development was organized through Git branches and reviewed pull requests. All t
 - `src/Lights.*`, `shaders/basic.vert`, `shaders/basic.frag` - transforms, per-fragment lighting, emissive materials and automatic snow coverage.
 - `src/Snow.*`, `src/Fireworks.*` - particle effects.
 - `src/LrtMenu.*`, `shaders/menu_*` - animated LRT and interactive selection.
-- `src/MusicPlayer.*`, `assets/audio/christmas.mp3` - looping background music through miniaudio.
+- `src/MusicPlayer.*`, `assets/audio/` - looping Christmas music and welcome/station voice announcements through miniaudio.
 - `assets/textures/`, `assets/menu/` - textures and menu image assets.
 
 ## Third-party assets and acknowledgments
 
 See [CREDITS.md](CREDITS.md) for libraries, music, assets and attribution information. The Christmas track is **“We Wish You a Merry Christmas” by Kevin MacLeod**, provided under **Creative Commons Attribution 4.0**; the track and license links are documented in `CREDITS.md`.
+
+**Voice announcement attribution:** The repository also includes `assets/audio/welcome.mp3`, `Baiterek_station.mp3`, `Expo_station.mp3`, and `Ishim_station.mp3`. Their recording/generation method, authorship, and licensing are awaiting team confirmation and are explicitly flagged in [CREDITS.md](CREDITS.md).
 
 **Asset attribution status:** team-generated AI textures and LRT menu PNGs are documented in [CREDITS.md](CREDITS.md). The internet-sourced photograph `assets/textures/northern_lights_reference.png` is used as a Riverfront facade texture. A closely matching photograph was located on Krisha.kz, but the original photographer, copyright holder, and permission to distribute/use the image have **not** been verified. The team must obtain authorization or replace the asset with an original or appropriately licensed texture before the final public release. Merely citing a source is not permission to redistribute an image.
 
