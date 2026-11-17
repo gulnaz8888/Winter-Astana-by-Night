@@ -36,12 +36,24 @@ struct OrbitControl {
     double lastY = 0.0;
     double scroll = 0.0;
 
-    void reset(const glm::vec3& position, const glm::vec3& lookAt) {
+    void reset(
+        const glm::vec3& position,
+        const glm::vec3& lookAt
+    ) {
         target = lookAt;
+
         glm::vec3 delta = position - lookAt;
         distance = glm::length(delta);
         yaw = std::atan2(delta.x, delta.z);
-        pitch = std::asin(std::clamp(delta.y / std::max(distance, 0.001f), -1.f, 1.f));
+
+        pitch = std::asin(
+            std::clamp(
+                delta.y / std::max(distance, 0.001f),
+                -1.f,
+                1.f
+            )
+        );
+
         manual = false;
         dragging = false;
         scroll = 0.0;
@@ -49,6 +61,7 @@ struct OrbitControl {
 
     void apply(Camera& camera) const {
         float horizontal = distance * std::cos(pitch);
+
         camera.target = target;
         camera.position = target + glm::vec3(
             horizontal * std::sin(yaw),
@@ -58,9 +71,18 @@ struct OrbitControl {
     }
 };
 
-static void onScroll(GLFWwindow* window, double, double yOffset) {
-    auto* orbit = static_cast<OrbitControl*>(glfwGetWindowUserPointer(window));
-    if (orbit) orbit->scroll += yOffset;
+static void onScroll(
+    GLFWwindow* window,
+    double,
+    double yOffset
+) {
+    auto* orbit = static_cast<OrbitControl*>(
+        glfwGetWindowUserPointer(window)
+    );
+
+    if (orbit) {
+        orbit->scroll += yOffset;
+    }
 }
 
 int main() {
@@ -71,15 +93,24 @@ int main() {
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(
+        GLFW_OPENGL_PROFILE,
+        GLFW_OPENGL_CORE_PROFILE
+    );
 
 #ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(
+        GLFW_OPENGL_FORWARD_COMPAT,
+        GL_TRUE
+    );
 #endif
 
     GLFWwindow* window = glfwCreateWindow(
-        1280, 720, "Winter Astana by Night",
-        nullptr, nullptr
+        1280,
+        720,
+        "Winter Astana by Night",
+        nullptr,
+        nullptr
     );
 
     if (!window) {
@@ -103,7 +134,8 @@ int main() {
     glfwSwapInterval(1);
 
     std::cout << "OpenGL: "
-              << glGetString(GL_VERSION) << "\n";
+              << glGetString(GL_VERSION)
+              << "\n";
 
     try {
         Shader shader(
@@ -132,19 +164,28 @@ int main() {
         RiverfrontScene riverfrontScene;
 
         LrtMenu menu;
-        ChristmasMusicPlayer music("assets/audio/christmas.mp3");
+
+        // Christmas music added by teammate.
+        ChristmasMusicPlayer music(
+            "assets/audio/christmas.mp3"
+        );
+
         bool menuOpen = true;
         bool mouseWasPressed = false;
+        // Music toggle (V)
+        bool musicEnabled = true;
+        bool vWasPressed = false;
 
         Camera camera;
         camera.position = {0.f, 6.5f, 43.f};
         camera.target = {0.f, 22.f, -60.f};
 
         OrbitControl orbit;
+
         glfwSetWindowUserPointer(window, &orbit);
         glfwSetScrollCallback(window, onScroll);
 
-        Snow snow(3500);
+        Snow snow(2200);
         Fireworks fireworks;
 
         int activeScene = 0;
@@ -152,7 +193,7 @@ int main() {
         bool lightingEnabled = true;
         bool lWasPressed = false;
 
-        // Cinematic Wow Moment
+        // Cinematic Wow Moment.
         bool wowActive = false;
         bool pWasPressed = false;
         float wowStartTime = 0.0f;
@@ -175,37 +216,50 @@ int main() {
         bool rWasPressed = false;
 
         snow.setWind(
-            windDirection * windStrength, 0.f
+            windDirection * windStrength,
+            0.f
         );
 
         const int snowCounts[3] = {
-            3500, 3500, 1000
+            2200,
+            2200,
+            900
         };
 
+        // Fog colors:
+        // 0 - Winter City
+        // 1 - EXPO
+        // 2 - Riverfront
         const glm::vec3 fogColors[3] = {
             {0.055f, 0.085f, 0.15f},
-            {0.30f, 0.22f, 0.17f},
+            {0.045f, 0.075f, 0.135f},
             {0.035f, 0.065f, 0.12f}
         };
 
         const float fogDensities[3] = {
-            0.0023f, 0.0025f, 0.0018f
+            0.0023f,
+            0.0025f,
+            0.0018f
         };
 
+        // Dark blue sky in all three scenes.
         const glm::vec3 skyHorizon[3] = {
             {0.055f, 0.085f, 0.15f},
-            {0.33f, 0.24f, 0.18f},
+            {0.045f, 0.075f, 0.135f},
             {0.035f, 0.065f, 0.12f}
         };
 
         const glm::vec3 skyTop[3] = {
-            {0.005f, 0.01f, 0.028f},
-            {0.20f, 0.14f, 0.11f},
+            {0.005f, 0.010f, 0.028f},
+            {0.005f, 0.010f, 0.028f},
             {0.004f, 0.009f, 0.025f}
         };
 
+        // Stars enabled in EXPO.
         const float skyStars[3] = {
-            0.32f, 0.f, 0.55f
+            0.32f,
+            0.45f,
+            0.55f
         };
 
         const glm::vec3 camPositions[3] = {
@@ -220,7 +274,11 @@ int main() {
             {0.f, 18.f, -110.f}
         };
 
-        orbit.reset(camPositions[0], camTargets[0]);
+        orbit.reset(
+            camPositions[0],
+            camTargets[0]
+        );
+
         bool homeWasPressed = false;
 
         glEnable(GL_CULL_FACE);
@@ -257,21 +315,35 @@ int main() {
                 lastTitleTime = now;
             }
 
-            if (glfwGetKey(
-                window, GLFW_KEY_ESCAPE
-            ) == GLFW_PRESS) {
+            if (
+                glfwGetKey(
+                    window,
+                    GLFW_KEY_ESCAPE
+                ) == GLFW_PRESS
+            ) {
                 glfwSetWindowShouldClose(
-                    window, GLFW_TRUE
+                    window,
+                    GLFW_TRUE
                 );
             }
 
-            // Start or restart Wow Moment with P in Winter City
+            // Wow Moment: P.
             bool pPressed =
-                glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS;
+                glfwGetKey(window, GLFW_KEY_P)
+                == GLFW_PRESS;
 
-            if (pPressed && !pWasPressed && activeScene == 0) {
+            if (
+                pPressed &&
+                !pWasPressed &&
+                activeScene == 0
+            ) {
                 wowActive = true;
-                orbit.reset(camPositions[0], camTargets[0]);
+
+                orbit.reset(
+                    camPositions[0],
+                    camTargets[0]
+                );
+
                 wowStartTime = time;
                 wowProgress = 0.0f;
                 lightingEnabled = true;
@@ -281,14 +353,36 @@ int main() {
 
             if (wowActive) {
                 wowProgress = std::clamp(
-                    (time - wowStartTime) / wowDuration,
+                    (time - wowStartTime) /
+                    wowDuration,
                     0.0f,
                     1.0f
                 );
             }
 
-            // Lighting toggle: L
 
+            // MUSIC TOGGLE: V
+            bool vPressed =
+                glfwGetKey(window, GLFW_KEY_V)
+                == GLFW_PRESS;
+
+            if (vPressed && !vWasPressed) {
+                musicEnabled = !musicEnabled;
+
+                if (!musicEnabled) {
+                    music.stopAndRewind();
+                    std::cout << "Music: OFF\n";
+                } else {
+                    if (!menuOpen) {
+                        music.playFromStart();
+                    }
+                    std::cout << "Music: ON\n";
+                }
+            }
+
+            vWasPressed = vPressed;
+
+            // Lighting: L.
             bool lPressed =
                 glfwGetKey(window, GLFW_KEY_L)
                 == GLFW_PRESS;
@@ -296,13 +390,19 @@ int main() {
             if (lPressed && !lWasPressed) {
                 lightingEnabled = !lightingEnabled;
 
-                std::cout << "Point lighting: "
-                          << (lightingEnabled ? "ON" : "OFF")
-                          << std::endl;
+                std::cout
+                    << "Point lighting: "
+                    << (
+                        lightingEnabled
+                        ? "ON"
+                        : "OFF"
+                    )
+                    << std::endl;
             }
 
             lWasPressed = lPressed;
 
+            // Fireworks: F.
             bool fPressed =
                 glfwGetKey(window, GLFW_KEY_F)
                 == GLFW_PRESS;
@@ -310,13 +410,19 @@ int main() {
             if (fPressed && !fWasPressed) {
                 fireworksEnabled = !fireworksEnabled;
 
-                std::cout << "Fireworks: "
-                          << (fireworksEnabled ? "ON" : "OFF")
-                          << std::endl;
+                std::cout
+                    << "Fireworks: "
+                    << (
+                        fireworksEnabled
+                        ? "ON"
+                        : "OFF"
+                    )
+                    << std::endl;
             }
 
             fWasPressed = fPressed;
 
+            // Automatic snow: N.
             bool nPressed =
                 glfwGetKey(window, GLFW_KEY_N)
                 == GLFW_PRESS;
@@ -324,9 +430,14 @@ int main() {
             if (nPressed && !nWasPressed) {
                 autoSnowEnabled = !autoSnowEnabled;
 
-                std::cout << "Automatic snow: "
-                          << (autoSnowEnabled ? "ON" : "OFF")
-                          << std::endl;
+                std::cout
+                    << "Automatic snow: "
+                    << (
+                        autoSnowEnabled
+                        ? "ON"
+                        : "OFF"
+                    )
+                    << std::endl;
             }
 
             nWasPressed = nPressed;
@@ -355,31 +466,41 @@ int main() {
 
             if (leftPressed && !leftWasPressed) {
                 windDirection = -1.f;
+
                 windStrength = std::max(
-                    windStrength, 2.f
+                    windStrength,
+                    2.f
                 );
+
                 windChanged = true;
             }
 
             if (rightPressed && !rightWasPressed) {
                 windDirection = 1.f;
+
                 windStrength = std::max(
-                    windStrength, 2.f
+                    windStrength,
+                    2.f
                 );
+
                 windChanged = true;
             }
 
             if (upPressed && !upWasPressed) {
                 windStrength = std::min(
-                    windStrength + 2.f, 18.f
+                    windStrength + 2.f,
+                    18.f
                 );
+
                 windChanged = true;
             }
 
             if (downPressed && !downWasPressed) {
                 windStrength = std::max(
-                    windStrength - 2.f, 0.f
+                    windStrength - 2.f,
+                    0.f
                 );
+
                 windChanged = true;
             }
 
@@ -403,13 +524,17 @@ int main() {
 
                 std::cout
                     << "Wind X: " << windX
-                    << " | Strength: " << windStrength
+                    << " | Strength: "
+                    << windStrength
                     << std::endl;
             }
 
             int width, height;
+
             glfwGetFramebufferSize(
-                window, &width, &height
+                window,
+                &width,
+                &height
             );
 
             if (width == 0 || height == 0) {
@@ -419,48 +544,98 @@ int main() {
 
             int requested = activeScene;
             bool choose = false;
+
             const bool menuWasOpen = menuOpen;
-            if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) menuOpen = true;
+
+            if (
+                glfwGetKey(window, GLFW_KEY_M)
+                == GLFW_PRESS
+            ) {
+                menuOpen = true;
+            }
+
             int windowWidth, windowHeight;
-            glfwGetWindowSize(window, &windowWidth, &windowHeight);
+
+            glfwGetWindowSize(
+                window,
+                &windowWidth,
+                &windowHeight
+            );
+
             double cursorX, cursorY;
-            glfwGetCursorPos(window, &cursorX, &cursorY);
+
+            glfwGetCursorPos(
+                window,
+                &cursorX,
+                &cursorY
+            );
+
             menu.update(time);
-            int hovered = menu.pick(cursorX, cursorY, windowWidth, windowHeight);
-            bool mousePressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
-            if (menuOpen && mousePressed && !mouseWasPressed && hovered >= 0) {
+
+            int hovered = menu.pick(
+                cursorX,
+                cursorY,
+                windowWidth,
+                windowHeight
+            );
+
+            bool mousePressed =
+                glfwGetMouseButton(
+                    window,
+                    GLFW_MOUSE_BUTTON_LEFT
+                ) == GLFW_PRESS;
+
+            if (
+                menuOpen &&
+                mousePressed &&
+                !mouseWasPressed &&
+                hovered >= 0
+            ) {
                 requested = hovered;
                 choose = true;
             }
+
             mouseWasPressed = mousePressed;
 
-            if (glfwGetKey(
-                window, GLFW_KEY_1
-            ) == GLFW_PRESS) {
+            if (
+                glfwGetKey(window, GLFW_KEY_1)
+                == GLFW_PRESS
+            ) {
                 requested = 0;
                 choose = true;
             }
 
-            if (glfwGetKey(
-                window, GLFW_KEY_2
-            ) == GLFW_PRESS) {
+            if (
+                glfwGetKey(window, GLFW_KEY_2)
+                == GLFW_PRESS
+            ) {
                 requested = 1;
                 choose = true;
             }
 
-            if (glfwGetKey(
-                window, GLFW_KEY_3
-            ) == GLFW_PRESS) {
+            if (
+                glfwGetKey(window, GLFW_KEY_3)
+                == GLFW_PRESS
+            ) {
                 requested = 2;
                 choose = true;
             }
 
-            if (choose) menuOpen = false;
+            if (choose) {
+                menuOpen = false;
+            }
+
+            // MUSIC:
+            // Start music after selecting a scene.
+            // Stop and rewind when returning to menu.
+            
             if (menuWasOpen && !menuOpen) {
-                music.playFromStart();
-                } else if (!menuWasOpen && menuOpen) {
-                    music.stopAndRewind();
-                    }
+               if (musicEnabled) {
+                  music.playFromStart();
+                }
+            } else if (!menuWasOpen && menuOpen) {
+               music.stopAndRewind();
+            }
 
             if (requested != activeScene) {
                 activeScene = requested;
@@ -470,108 +645,250 @@ int main() {
 
                 camera.target =
                     camTargets[activeScene];
+
                 wowActive = false;
-                orbit.reset(camPositions[activeScene], camTargets[activeScene]);
+
+                orbit.reset(
+                    camPositions[activeScene],
+                    camTargets[activeScene]
+                );
             }
 
             if (menuOpen) {
                 orbit.dragging = false;
                 orbit.scroll = 0.0;
-                glClearColor(0.005f, 0.012f, 0.03f, 1.f);
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                menu.draw(shader, static_cast<float>(width) / height, hovered);
+
+                glClearColor(
+                    0.005f,
+                    0.012f,
+                    0.03f,
+                    1.f
+                );
+
+                glClear(
+                    GL_COLOR_BUFFER_BIT |
+                    GL_DEPTH_BUFFER_BIT
+                );
+
+                menu.draw(
+                    shader,
+                    static_cast<float>(width) /
+                    height,
+                    hovered
+                );
+
                 glfwSwapBuffers(window);
                 glfwPollEvents();
                 continue;
             }
 
-            // Orbit camera: mouse/touchpad drag, scroll, WASD, Home.
-            bool homePressed = glfwGetKey(window, GLFW_KEY_HOME) == GLFW_PRESS;
-            if (homePressed && !homeWasPressed) {
-                orbit.reset(camPositions[activeScene], camTargets[activeScene]);
+            // Camera controls:
+            // Mouse drag, scroll, WASD, Home.
+            bool homePressed =
+                glfwGetKey(
+                    window,
+                    GLFW_KEY_HOME
+                ) == GLFW_PRESS;
+
+            if (
+                homePressed &&
+                !homeWasPressed
+            ) {
+                orbit.reset(
+                    camPositions[activeScene],
+                    camTargets[activeScene]
+                );
+
                 wowActive = false;
             }
+
             homeWasPressed = homePressed;
 
-            bool leftDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+            bool leftDown =
+                glfwGetMouseButton(
+                    window,
+                    GLFW_MOUSE_BUTTON_LEFT
+                ) == GLFW_PRESS;
+
             if (leftDown && !orbit.dragging) {
                 orbit.dragging = true;
-                glfwGetCursorPos(window, &orbit.lastX, &orbit.lastY);
+
+                glfwGetCursorPos(
+                    window,
+                    &orbit.lastX,
+                    &orbit.lastY
+                );
             } else if (!leftDown) {
                 orbit.dragging = false;
             }
 
             if (orbit.dragging) {
                 double x, y;
-                glfwGetCursorPos(window, &x, &y);
+
+                glfwGetCursorPos(
+                    window,
+                    &x,
+                    &y
+                );
+
                 double dx = x - orbit.lastX;
                 double dy = y - orbit.lastY;
+
                 orbit.lastX = x;
                 orbit.lastY = y;
+
                 if (dx != 0.0 || dy != 0.0) {
-                    orbit.yaw -= static_cast<float>(dx) * 0.005f;
-                    orbit.pitch += static_cast<float>(dy) * 0.005f;
+                    orbit.yaw -=
+                        static_cast<float>(dx)
+                        * 0.005f;
+
+                    orbit.pitch +=
+                        static_cast<float>(dy)
+                        * 0.005f;
+
                     orbit.manual = true;
                 }
             }
 
-            float turnSpeed = 1.2f * std::min(deltaTime, 0.05f);
-            if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+            float turnSpeed =
+                1.2f *
+                std::min(deltaTime, 0.05f);
+
+            if (
+                glfwGetKey(window, GLFW_KEY_A)
+                == GLFW_PRESS
+            ) {
                 orbit.yaw -= turnSpeed;
                 orbit.manual = true;
             }
-            if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+
+            if (
+                glfwGetKey(window, GLFW_KEY_D)
+                == GLFW_PRESS
+            ) {
                 orbit.yaw += turnSpeed;
                 orbit.manual = true;
             }
-            if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+
+            if (
+                glfwGetKey(window, GLFW_KEY_W)
+                == GLFW_PRESS
+            ) {
                 orbit.pitch += turnSpeed;
                 orbit.manual = true;
             }
-            if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+
+            if (
+                glfwGetKey(window, GLFW_KEY_S)
+                == GLFW_PRESS
+            ) {
                 orbit.pitch -= turnSpeed;
                 orbit.manual = true;
             }
+
             if (orbit.scroll != 0.0) {
-                orbit.distance *= std::pow(0.90f, static_cast<float>(orbit.scroll));
+                orbit.distance *= std::pow(
+                    0.90f,
+                    static_cast<float>(
+                        orbit.scroll
+                    )
+                );
+
                 orbit.scroll = 0.0;
                 orbit.manual = true;
             }
-            if (orbit.manual) wowActive = false;
-            orbit.distance = std::clamp(orbit.distance, 12.f, 240.f);
-            float minPitch = std::asin(std::clamp(
-                (1.0f - orbit.target.y) / orbit.distance, -0.85f, 0.0f
-            ));
-            orbit.pitch = std::clamp(orbit.pitch, minPitch, 1.30f);
 
-            // Keep EXPO's automatic camera until the user takes control.
-            if (activeScene == 1 && !orbit.manual) {
-                camera.position = camPositions[1];
-                camera.position.x = std::sin(time * 0.25f) * 5.f;
-                camera.target = camTargets[1];
-            } else if (!wowActive || activeScene != 0) {
+            if (orbit.manual) {
+                wowActive = false;
+            }
+
+            orbit.distance = std::clamp(
+                orbit.distance,
+                12.f,
+                240.f
+            );
+
+            float minPitch = std::asin(
+                std::clamp(
+                    (1.0f - orbit.target.y) /
+                    orbit.distance,
+                    -0.85f,
+                    0.0f
+                )
+            );
+
+            orbit.pitch = std::clamp(
+                orbit.pitch,
+                minPitch,
+                1.30f
+            );
+
+            // Automatic EXPO camera.
+            if (
+                activeScene == 1 &&
+                !orbit.manual
+            ) {
+                camera.position =
+                    camPositions[1];
+
+                camera.position.x =
+                    std::sin(time * 0.25f)
+                    * 5.f;
+
+                camera.target =
+                    camTargets[1];
+
+            } else if (
+                !wowActive ||
+                activeScene != 0
+            ) {
                 orbit.apply(camera);
             }
 
-            // Cinematic camera movement in Winter City
-            if (wowActive && activeScene == 0) {
+            // Cinematic camera movement.
+            if (
+                wowActive &&
+                activeScene == 0
+            ) {
                 float t = wowProgress;
 
-                // Smooth ease-in/ease-out
-                float smoothT = t * t * (3.0f - 2.0f * t);
+                float smoothT =
+                    t * t * (3.0f - 2.0f * t);
 
-                const glm::vec3 startPos(0.0f, 6.5f, 43.0f);
-                const glm::vec3 endPos(0.0f, 85.0f, 100.0f);
+                const glm::vec3 startPos(
+                    0.0f,
+                    6.5f,
+                    43.0f
+                );
 
-                const glm::vec3 startTarget(0.0f, 22.0f, -60.0f);
-                const glm::vec3 endTarget(0.0f, 12.0f, -55.0f);
+                const glm::vec3 endPos(
+                    0.0f,
+                    85.0f,
+                    100.0f
+                );
+
+                const glm::vec3 startTarget(
+                    0.0f,
+                    22.0f,
+                    -60.0f
+                );
+
+                const glm::vec3 endTarget(
+                    0.0f,
+                    12.0f,
+                    -55.0f
+                );
 
                 camera.position = glm::mix(
-                    startPos, endPos, smoothT
+                    startPos,
+                    endPos,
+                    smoothT
                 );
 
                 camera.target = glm::mix(
-                    startTarget, endTarget, smoothT
+                    startTarget,
+                    endTarget,
+                    smoothT
                 );
             }
 
@@ -588,38 +905,56 @@ int main() {
                 GL_DEPTH_BUFFER_BIT
             );
 
+            // SKY.
             glDisable(GL_DEPTH_TEST);
 
             skyShader.use();
+
             skyShader.setVec3(
-                "uHorizon", skyHorizon[activeScene]
+                "uHorizon",
+                skyHorizon[activeScene]
             );
+
             skyShader.setVec3(
-                "uTop", skyTop[activeScene]
+                "uTop",
+                skyTop[activeScene]
             );
+
             skyShader.setFloat(
-                "uStars", skyStars[activeScene]
+                "uStars",
+                skyStars[activeScene]
             );
 
             sky.draw(skyShader);
 
             glEnable(GL_DEPTH_TEST);
 
+            // MAIN SHADER.
             shader.use();
 
-            shader.setMat4("uView", view);
-            shader.setMat4("uProj", projection);
+            shader.setMat4(
+                "uView",
+                view
+            );
 
-            shader.setVec3(
-                "uCamPos", camera.position
+            shader.setMat4(
+                "uProj",
+                projection
             );
 
             shader.setVec3(
-                "uFogColor", fogColors[activeScene]
+                "uCamPos",
+                camera.position
+            );
+
+            shader.setVec3(
+                "uFogColor",
+                fogColors[activeScene]
             );
 
             shader.setFloat(
-                "uFogDensity", fogDensities[activeScene]
+                "uFogDensity",
+                fogDensities[activeScene]
             );
 
             Lights::apply(
@@ -636,18 +971,31 @@ int main() {
             );
 
             shader.setInt(
-                "uSceneIndex", activeScene
+                "uSceneIndex",
+                activeScene
             );
 
-            shader.setFloat("uTime", time);
-            shader.setInt("uWowActive", wowActive ? 1 : 0);
-            shader.setFloat("uWowProgress", wowProgress);
+            shader.setFloat(
+                "uTime",
+                time
+            );
+
+            shader.setInt(
+                "uWowActive",
+                wowActive ? 1 : 0
+            );
+
+            shader.setFloat(
+                "uWowProgress",
+                wowProgress
+            );
 
             shader.setInt(
                 "uAutoSnowEnabled",
                 autoSnowEnabled ? 1 : 0
             );
 
+            // SCENES.
             if (activeScene == 0) {
                 scene.update(time);
                 scene.draw(shader);
@@ -660,6 +1008,7 @@ int main() {
                 riverfrontScene.draw(shader);
             }
 
+            // SNOW.
             snow.update(deltaTime);
 
             snow.draw(
@@ -669,6 +1018,7 @@ int main() {
                 snowCounts[activeScene]
             );
 
+            // FIREWORKS.
             if (
                 activeScene == 2 &&
                 fireworksEnabled
